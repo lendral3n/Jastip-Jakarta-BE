@@ -1,0 +1,30 @@
+package user
+
+import "time"
+
+type User struct {
+	ID       uint
+	Name         string
+	Email        string
+	Password     string
+	PhoneNumber  int
+	PhotoProfile interface{}
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+// interface untuk Data Layer
+type UserDataInterface interface {
+	Insert(input User) error
+	Update(userIdLogin int, input User) error
+	SelectById(userIdLogin int) (*User, error)
+	Login(phoneOrEmail, password string) (data *User, err error)
+}
+
+// interface untuk Service Layer
+type UserServiceInterface interface {
+	Create(input User) error
+	GetById(userIdLogin int) (*User, error)
+	Update(userIdLogin int, input User) error
+	Login(phoneOrEmail, password string) (data *User, token string, err error)
+}
