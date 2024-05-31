@@ -19,21 +19,15 @@ type UserResponse struct {
 }
 
 func UserToResponse(data *user.User) UserResponse {
-	photoProfileURL, ok := data.PhotoProfile.(string)
-	if !ok {
-		photoProfileURL = ""
-	}
-
-	var result = UserResponse{
+	return UserResponse{
 		ID:           data.ID,
 		Name:         data.Name,
 		Email:        data.Email,
 		PhoneNumber:  data.PhoneNumber,
-		PhotoProfile: photoProfileURL,
+		PhotoProfile: data.PhotoProfile,
 		CreatedAt:    formatDateToIndonesian(data.CreatedAt),
 		UpdatedAt:    formatDateToIndonesian(data.UpdatedAt),
 	}
-	return result
 }
 
 func formatDateToIndonesian(t time.Time) string {

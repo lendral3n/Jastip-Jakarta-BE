@@ -3,7 +3,6 @@ package handler
 import (
 	"jastip-jakarta/features/user"
 	"math/rand"
-	"mime/multipart"
 	"time"
 )
 
@@ -38,13 +37,13 @@ func RequestToUser(input UserRequest) user.User {
 	}
 }
 
-func UpdateRequestToUser(input UserUpdateRequest, fileHeader *multipart.FileHeader) user.User {
+func UpdateRequestToUser(input UserUpdateRequest) user.User {
 	return user.User{
 		Name:         input.Name,
 		Email:        input.Email,
 		Password:     input.Password,
 		PhoneNumber:  input.PhoneNumber,
-		PhotoProfile: fileHeader,
+		PhotoProfile: input.PhotoProfile,
 	}
 }
 

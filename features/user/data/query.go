@@ -18,7 +18,7 @@ type userQuery struct {
 
 func New(db *gorm.DB, cloudinaryUploader cloudinary.CloudinaryUploaderInterface) user.UserDataInterface {
 	return &userQuery{
-		db: db,
+		db:  db,
 		cld: cloudinaryUploader,
 	}
 }
@@ -79,20 +79,14 @@ func (u *userQuery) SelectById(userIdLogin int) (*user.User, error) {
 }
 
 // Update implements user.UserDataInterface.
-func (u *userQuery) Update(userIdLogin int, input user.User) error {
-	dataGorm := UserToModel(input)
-
-	// Cek apakah PhotoProfile adalah *multipart.FileHeader
-	if fileHeader, ok := input.PhotoProfile.(*multipart.FileHeader); ok {
-		uploadedFileURL, err := u.cld.UploadImage(fileHeader)
-		if err != nil {
-			return err
-		}
-		dataGorm.PhotoProfile = uploadedFileURL
-	} else if input.PhotoProfile != nil {
-		// Jika PhotoProfile bukan *multipart.FileHeader tetapi tidak nil, maka itu harus string
-		dataGorm.PhotoProfile = input.PhotoProfile.(string)
+func (u *userQuery) Update(userIdLogin int, input user.User, photo *multipart.FileHeader) error {
+	imageURL, err := u.cld.UploadImage(photo)
+	if err != nil {
+		return err
 	}
+
+	dataGorm := UserToModel(input)
+	dataGorm.PhotoProfile = imageURL
 
 	tx := u.db.Model(&User{}).Where("id = ?", userIdLogin).Updates(dataGorm)
 	if tx.Error != nil {

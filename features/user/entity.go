@@ -1,6 +1,9 @@
 package user
 
-import "time"
+import (
+	"mime/multipart"
+	"time"
+)
 
 type User struct {
 	ID       uint
@@ -8,7 +11,7 @@ type User struct {
 	Email        string
 	Password     string
 	PhoneNumber  int
-	PhotoProfile interface{}
+	PhotoProfile string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
@@ -16,7 +19,7 @@ type User struct {
 // interface untuk Data Layer
 type UserDataInterface interface {
 	Insert(input User) error
-	Update(userIdLogin int, input User) error
+	Update(userIdLogin int, input User, photo *multipart.FileHeader) error
 	SelectById(userIdLogin int) (*User, error)
 	Login(phoneOrEmail, password string) (data *User, err error)
 }
@@ -25,6 +28,6 @@ type UserDataInterface interface {
 type UserServiceInterface interface {
 	Create(input User) error
 	GetById(userIdLogin int) (*User, error)
-	Update(userIdLogin int, input User) error
+	Update(userIdLogin int, input User, photo *multipart.FileHeader) error
 	Login(phoneOrEmail, password string) (data *User, token string, err error)
 }

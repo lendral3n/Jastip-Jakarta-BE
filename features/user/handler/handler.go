@@ -64,8 +64,8 @@ func (handler *UserHandler) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, responses.WebResponse("error retrieving the file", nil))
 	}
 
-	userCore := UpdateRequestToUser(userData, fileHeader)
-	errUpdate := handler.userService.Update(userIdLogin, userCore)
+	userCore := UpdateRequestToUser(userData)
+	errUpdate := handler.userService.Update(userIdLogin, userCore, fileHeader)
 	if errUpdate != nil {
 		return c.JSON(http.StatusInternalServerError, responses.WebResponse(errUpdate.Error(), nil))
 	}
