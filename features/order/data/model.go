@@ -12,18 +12,18 @@ type UserOrder struct {
 	ID uint `gorm:"primaryKey" json:"id"`
 	gorm.Model
 	UserID         uint
-	User           ud.User
+	User           ud.User `gorm:"foreignKey:UserID"`
 	ItemName       string
 	TrackingNumber string
 	OnlineStore    string
 	WhatsAppNumber int
 	RegionCode     string
+	AdminOrder     AdminOrder
 }
 
 type AdminOrder struct {
 	gorm.Model
 	UserOrderID           uint
-	UserOrder             UserOrder
 	Status                string
 	WeightItem            float64
 	DeliveryBatch         string
