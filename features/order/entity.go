@@ -31,7 +31,6 @@ type AdminOrder struct {
 	PackageReceivedPhoto  string
 	EstimatedDeliveryTime *time.Time
 	// User                  ud.Core
-	UserOrder []UserOrder
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -39,9 +38,13 @@ type AdminOrder struct {
 // interface untuk Data Layer
 type OrderDataInterface interface {
 	InsertUserOrder(userIdLogin int, inputOrder UserOrder) error
+	PutUserOrder(userIdLogin int, userOrderId uint, inputOrder UserOrder) error
+	CheckOrderStatus(userOrderId uint) (string, error)
 }
 
 // interface untuk Service Layer
 type OrderServiceInterface interface {
 	CreateOrder(userIdLogin int, inputOrder UserOrder) error
+	UpdateUserOrder(userIdLogin int, userOrderId uint, inputOrder UserOrder) error
+
 }

@@ -39,6 +39,16 @@ func RequestToUserOrder(input UserOrderRequest) order.UserOrder {
 	}
 }
 
+func RequestUpdateToUserOrder(input UserOrderRequest) order.UserOrder {
+	return order.UserOrder{
+		ItemName:       input.ItemName,
+		TrackingNumber: input.TrackingNumber,
+		OnlineStore:    input.OnlineStore,
+		WhatsAppNumber: input.WhatsAppNumber,
+		RegionCode:     input.RegionCode,
+	}
+}
+
 func RequestToAdminOrder(input AdminOrderRequest) order.AdminOrder {
 	return order.AdminOrder{
 		Status:                input.Status,

@@ -35,3 +35,24 @@ func (o *orderService) CreateOrder(userIdLogin int, inputOrder order.UserOrder) 
 
 	return o.orderData.InsertUserOrder(userIdLogin, inputOrder)
 }
+
+// UpdateUserOrder implements order.OrderServiceInterface.
+func (o *orderService) UpdateUserOrder(userIdLogin int, userOrderId uint, inputOrder order.UserOrder) error {
+	// Mengecek status terlebih dahulu
+	status, err := o.orderData.CheckOrderStatus(userOrderId)
+	if err != nil {
+		return err
+	}
+
+	// Melakukan update jika status 'Menunggu Diterima'
+	if status == "Menunggu Diterima" {
+		err = o.orderData.PutUserOrder(userIdLogin, userOrderId, inputOrder)
+		if err != nil {
+			return err
+		}
+	} else {
+		return errors.New("Order tidak dapat diupdate karena status bukan 'Menunggu Diterima'")
+	}
+
+	return nil
+}

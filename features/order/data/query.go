@@ -35,6 +35,22 @@ func (o *orderQuery) InsertUserOrder(userIdLogin int, inputOrder order.UserOrder
 	if result.Error != nil {
 		return result.Error
 	}
-	
+
 	return nil
+}
+
+// PutUserOrder implements order.OrderDataInterface.
+func (o *orderQuery) PutUserOrder(userIdLogin int, userOrderId uint, inputOrder order.UserOrder) error {
+	result := o.db.Model(&UserOrder{}).Where("id = ?", userOrderId).Updates(inputOrder)
+	return result.Error
+}
+
+// CheckOrderStatus implements order.OrderDataInterface.
+func (o *orderQuery) CheckOrderStatus(userOrderId uint) (string, error) {
+	var adminOrder AdminOrder
+	result := o.db.Select("status").Where("user_order_id = ?", userOrderId).First(&adminOrder)
+	if result.Error != nil {
+		return "", result.Error
+	}
+	return adminOrder.Status, nil
 }
