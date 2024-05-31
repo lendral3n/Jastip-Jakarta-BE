@@ -5,6 +5,7 @@ import (
 	"jastip-jakarta/features/user"
 	"jastip-jakarta/utils/encrypts"
 	"jastip-jakarta/utils/middlewares"
+	"mime/multipart"
 )
 
 type userService struct {
@@ -82,7 +83,7 @@ func (u *userService) Login(phoneOrEmail string, password string) (data *user.Us
 }
 
 // Update implements user.UserServiceInterface.
-func (u *userService) Update(userIdLogin int, input user.User) error {
+func (u *userService) Update(userIdLogin int, input user.User, photo *multipart.FileHeader) error {
 	// Hash password baru jika diubah
 	if input.Password != "" {
 		hashedPass, errHash := u.hashService.HashPassword(input.Password)
@@ -92,6 +93,6 @@ func (u *userService) Update(userIdLogin int, input user.User) error {
 		input.Password = hashedPass
 	}
 
-	err := u.userData.Update(userIdLogin, input)
+	err := u.userData.Update(userIdLogin, input, photo)
 	return err
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"jastip-jakarta/app/config"
 	ud "jastip-jakarta/features/user/data"
+	od "jastip-jakarta/features/order/data"
 
 
 	"gorm.io/driver/mysql"
@@ -22,6 +23,8 @@ func InitDBMysql(cfg *config.AppConfig) *gorm.DB {
 
 	DB.AutoMigrate(
 		&ud.User{},
+		&od.UserOrder{},
+		&od.AdminOrder{},
 	)
 
 	return DB

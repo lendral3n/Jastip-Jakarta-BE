@@ -17,18 +17,13 @@ type User struct {
 }
 
 func UserToModel(input user.User) User {
-	photoProfileURL, ok := input.PhotoProfile.(string)
-	if !ok {
-		photoProfileURL = ""
-	}
-
 	return User{
 		ID:           input.ID,
 		Name:         input.Name,
 		Email:        input.Email,
 		Password:     input.Password,
 		PhoneNumber:  input.PhoneNumber,
-		PhotoProfile: photoProfileURL,
+		PhotoProfile: input.PhotoProfile,
 	}
 }
 
