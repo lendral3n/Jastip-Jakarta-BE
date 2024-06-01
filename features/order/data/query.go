@@ -54,3 +54,24 @@ func (o *orderQuery) CheckOrderStatus(userOrderId uint) (string, error) {
 	}
 	return adminOrder.Status, nil
 }
+
+// SelectUserOrderWait implements order.OrderDataInterface.
+func (o *orderQuery) SelectUserOrderWait(userIdLogin int) ([]order.UserOrder, error) {
+	var userOrders []UserOrder
+
+	err := o.db.Preload("User").Preload("AdminOrder").
+		Joins("JOIN admin_orders ON admin_orders.user_order_id = user_orders.id").
+		Where("user_orders.user_id = ? AND admin_orders.status = ?", userIdLogin, "Menunggu Diterima").
+		Find(&userOrders).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var responseOrders []order.UserOrder
+	for _, uo := range userOrders {
+		responseOrders = append(responseOrders, uo.ModelToUserOrderWait())
+	}
+
+	return responseOrders, nil
+}

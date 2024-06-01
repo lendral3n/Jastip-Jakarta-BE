@@ -56,3 +56,12 @@ func (o *orderService) UpdateUserOrder(userIdLogin int, userOrderId uint, inputO
 
 	return nil
 }
+
+// SelectUserOrderWait implements order.OrderServiceInterface.
+func (o *orderService) SelectUserOrderWait(userIdLogin int) ([]order.UserOrder, error) {
+	userOrders, err := o.orderData.SelectUserOrderWait(userIdLogin)
+	if err != nil {
+		return nil, err
+	}
+	return userOrders, nil
+}
