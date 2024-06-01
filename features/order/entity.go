@@ -17,7 +17,7 @@ type UserOrder struct {
 	User           ud.User
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
-	AdminOrders    []AdminOrder
+	AdminOrders    AdminOrder
 }
 
 type AdminOrder struct {
@@ -40,11 +40,12 @@ type OrderDataInterface interface {
 	InsertUserOrder(userIdLogin int, inputOrder UserOrder) error
 	PutUserOrder(userIdLogin int, userOrderId uint, inputOrder UserOrder) error
 	CheckOrderStatus(userOrderId uint) (string, error)
+	SelectUserOrderWait(userIdLogin int) ([]UserOrder, error)
 }
 
 // interface untuk Service Layer
 type OrderServiceInterface interface {
 	CreateOrder(userIdLogin int, inputOrder UserOrder) error
 	UpdateUserOrder(userIdLogin int, userOrderId uint, inputOrder UserOrder) error
-
+	SelectUserOrderWait(userIdLogin int) ([]UserOrder, error)
 }

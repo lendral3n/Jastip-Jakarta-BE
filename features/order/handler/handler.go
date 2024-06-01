@@ -66,3 +66,22 @@ func (handler *OrderHandler) UpdateUserOrder(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, responses.WebResponse("Order berhasil diperbarui", nil))
 }
+
+func (handler *OrderHandler) GetUserOrderWait(c echo.Context) error {
+	userIdLogin := middlewares.ExtractTokenUserId(c)
+	if userIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	userOrders, err := handler.orderService.SelectUserOrderWait(userIdLogin)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	var userOrderWaitResponses []UserOrderWaitResponse
+	for _, userOrder := range userOrders {
+		userOrderWaitResponses = append(userOrderWaitResponses, CoreToResponseUserOrderWait(&userOrder))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mendapatkan orderan yang menunggu dikirim", userOrderWaitResponses))
+}

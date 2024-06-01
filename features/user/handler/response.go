@@ -18,6 +18,10 @@ type UserResponse struct {
 	UpdatedAt    string `json:"last_update"`
 }
 
+type UserResponseOrder struct {
+	Name         string `json:"name" form:"name"`
+}
+
 func UserToResponse(data *user.User) UserResponse {
 	return UserResponse{
 		ID:           data.ID,

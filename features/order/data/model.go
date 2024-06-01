@@ -50,7 +50,7 @@ func UserOrderToModel(input order.UserOrder) UserOrder {
 	}
 }
 
-func (o UserOrder) ModelToUserOrder() order.UserOrder {
+func (o UserOrder) ModelToUserOrderWait() order.UserOrder {
 	return order.UserOrder{
 		ID:             o.ID,
 		UserID:         o.UserID,
@@ -59,6 +59,8 @@ func (o UserOrder) ModelToUserOrder() order.UserOrder {
 		OnlineStore:    o.OnlineStore,
 		WhatsAppNumber: o.WhatsAppNumber,
 		RegionCode:     o.RegionCode,
+		User:           o.User.ModelToUser(),
+		AdminOrders:    o.AdminOrder.ModelToAdminOrder(),
 	}
 }
 
