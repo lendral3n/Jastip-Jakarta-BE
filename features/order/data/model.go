@@ -16,7 +16,7 @@ type UserOrder struct {
 	ItemName       string
 	TrackingNumber string
 	OnlineStore    string
-	WhatsAppNumber int
+	WhatsappNumber int
 	RegionCode     string
 	AdminOrder     AdminOrder
 }
@@ -45,7 +45,7 @@ func UserOrderToModel(input order.UserOrder) UserOrder {
 		ItemName:       input.ItemName,
 		TrackingNumber: input.TrackingNumber,
 		OnlineStore:    input.OnlineStore,
-		WhatsAppNumber: input.WhatsAppNumber,
+		WhatsappNumber: input.WhatsAppNumber,
 		RegionCode:     input.RegionCode,
 	}
 }
@@ -57,7 +57,7 @@ func (o UserOrder) ModelToUserOrderWait() order.UserOrder {
 		ItemName:       o.ItemName,
 		TrackingNumber: o.TrackingNumber,
 		OnlineStore:    o.OnlineStore,
-		WhatsAppNumber: o.WhatsAppNumber,
+		WhatsAppNumber: o.WhatsappNumber,
 		RegionCode:     o.RegionCode,
 		User:           o.User.ModelToUser(),
 		AdminOrders:    o.AdminOrder.ModelToAdminOrder(),

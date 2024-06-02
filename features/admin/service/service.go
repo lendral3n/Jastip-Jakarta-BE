@@ -1,0 +1,125 @@
+package service
+
+import (
+	"errors"
+	"jastip-jakarta/features/admin"
+	"jastip-jakarta/utils/encrypts"
+	"jastip-jakarta/utils/middlewares"
+	"mime/multipart"
+)
+
+type adminService struct {
+	adminData   admin.AdminDataInterface
+	hashService encrypts.HashInterface
+}
+
+// dependency injection
+func New(repo admin.AdminDataInterface, hash encrypts.HashInterface) admin.AdminServiceInterface {
+	return &adminService{
+		adminData:   repo,
+		hashService: hash,
+	}
+}
+
+// CreateSuper implements admin.AdminServiceInterface.
+func (u *adminService) CreateSuper(input admin.Admin) error {
+	if input.Password != "" {
+		hashedPass, errHash := u.hashService.HashPassword(input.Password)
+		if errHash != nil {
+			return errors.New("Error hash password.")
+		}
+		input.Password = hashedPass
+	}
+
+	if input.Role == "" {
+		input.Role = "Super"
+	}
+
+	err := u.adminData.Insert(input)
+	return err
+}
+
+// Create implements admin.AdminServiceInterface.
+func (u *adminService) Create(userIdLogin int, input admin.Admin) error {
+	role, err := u.adminData.SelectById(userIdLogin)
+	if err != nil {
+		return err
+	}
+
+	if role.Role != "Super" {
+		return errors.New("Hanya Super admin yang bisa membuat akun")
+	}
+
+	if input.Name == "" {
+		return errors.New("Nama tidak boleh kosong")
+	}
+	if input.Email == "" {
+		return errors.New("Email tidak boleh kosong")
+	}
+	if input.Password == "" {
+		return errors.New("Password tidak boleh kosong")
+	}
+	if input.PhoneNumber == 0 {
+		return errors.New("Nomor Telephone tidak boleh kosong")
+	}
+	if input.Role == "" {
+		return errors.New("Role tidak boleh kosong")
+	}
+
+	if input.Password != "" {
+		hashedPass, errHash := u.hashService.HashPassword(input.Password)
+		if errHash != nil {
+			return errors.New("Error hash password.")
+		}
+		input.Password = hashedPass
+	}
+
+	err = u.adminData.Insert(input)
+	return err
+}
+
+// GetById implements admin.AdminServiceInterface.
+func (u *adminService) GetById(adminIdLogin int) (*admin.Admin, error) {
+	adminData, err := u.adminData.SelectById(adminIdLogin)
+	if err != nil {
+		return nil, err
+	}
+	return adminData, nil
+}
+
+// Login implements admin.AdminServiceInterface.
+func (u *adminService) Login(phoneOrEmail string, password string) (data *admin.Admin, token string, err error) {
+	// Validasi jika email atau password kosong
+	if phoneOrEmail == "" {
+		return nil, "", errors.New("Email atau nomor telepon tidak boleh kosong")
+	}
+	if password == "" {
+		return nil, "", errors.New("Password tidak boleh kosong")
+	}
+
+	data, err = u.adminData.Login(phoneOrEmail, password)
+	if err != nil {
+		return nil, "", err
+	}
+
+	isValid := u.hashService.CheckPasswordHash(data.Password, password)
+	if !isValid {
+		return nil, "", errors.New("Sandi Salah")
+	}
+
+	token, errJwt := middlewares.CreateToken(int(data.ID))
+	if errJwt != nil {
+		return nil, "", errJwt
+	}
+
+	return data, token, err
+}
+
+// Update implements admin.AdminServiceInterface.
+func (u *adminService) Update(adminIdLogin int, photo *multipart.FileHeader) error {
+	if photo == nil {
+		return errors.New("Tidak ada foto yang di upload")
+	}
+	err := u.adminData.Update(adminIdLogin, photo)
+	return err
+}
