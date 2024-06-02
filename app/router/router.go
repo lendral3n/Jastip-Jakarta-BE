@@ -9,6 +9,10 @@ import (
 	uh "jastip-jakarta/features/user/handler"
 	us "jastip-jakarta/features/user/service"
 
+	ad "jastip-jakarta/features/admin/data"
+	ah "jastip-jakarta/features/admin/handler"
+	as "jastip-jakarta/features/admin/service"
+
 	od "jastip-jakarta/features/order/data"
 	oh "jastip-jakarta/features/order/handler"
 	os "jastip-jakarta/features/order/service"
@@ -25,15 +29,26 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	userService := us.New(userData, hash)
 	userHandlerAPI := uh.New(userService)
 
+	adminData := ad.New(db, cloudinaryUploader)
+	adminService := as.New(adminData, hash)
+	adminHandlerAPI := ah.New(adminService)
+
 	orderData := od.New(db)
 	orderService := os.New(orderData)
 	orderHandlerAPI := oh.New(orderService)
 
 	// define routes/ endpoint USERS
-	e.POST("/login", userHandlerAPI.Login)
-	e.POST("/register", userHandlerAPI.RegisterUser)
-	e.GET("/users", userHandlerAPI.GetUser, middlewares.JWTMiddleware())
-	e.PUT("/users", userHandlerAPI.UpdateUser, middlewares.JWTMiddleware())
+	e.POST("users/login", userHandlerAPI.Login)
+	e.POST("users/register", userHandlerAPI.RegisterUser)
+	e.GET("/users/profile", userHandlerAPI.GetUser, middlewares.JWTMiddleware())
+	e.PUT("/users/profile", userHandlerAPI.UpdateUser, middlewares.JWTMiddleware())
+
+	// define routes/ endpoint ADMIN
+	e.POST("/admin/register", adminHandlerAPI.RegisterAdminSuper)
+	e.POST("/admin/login", adminHandlerAPI.Login)
+	e.POST("/admin/new", adminHandlerAPI.RegisterAdmin, middlewares.JWTMiddleware())
+	e.GET("/admin/profile", adminHandlerAPI.GetAdmin, middlewares.JWTMiddleware())
+	e.PUT("/admin/profile", adminHandlerAPI.UpdateAdmin, middlewares.JWTMiddleware())
 
 	// define routes/ endpoint USER ORDER
 	e.POST("/users/order", orderHandlerAPI.CreateUserOrder, middlewares.JWTMiddleware())
