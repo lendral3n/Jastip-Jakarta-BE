@@ -16,7 +16,7 @@ func New(repo order.OrderDataInterface) order.OrderServiceInterface {
 }
 
 // CreateOrder implements order.OrderServiceInterface.
-func (o *orderService) CreateOrder(userIdLogin int, inputOrder order.UserOrder) error {
+func (o *orderService) CreateUserOrder(userIdLogin int, inputOrder order.UserOrder) error {
 	if inputOrder.ItemName == "" {
 		return errors.New("Nama Barang harus diisi")
 	}
@@ -58,8 +58,53 @@ func (o *orderService) UpdateUserOrder(userIdLogin int, userOrderId uint, inputO
 }
 
 // SelectUserOrderWait implements order.OrderServiceInterface.
-func (o *orderService) SelectUserOrderWait(userIdLogin int) ([]order.UserOrder, error) {
+func (o *orderService) GetUserOrderWait(userIdLogin int) ([]order.UserOrder, error) {
 	userOrders, err := o.orderData.SelectUserOrderWait(userIdLogin)
+	if err != nil {
+		return nil, err
+	}
+	return userOrders, nil
+}
+
+// GetById implements order.OrderServiceInterface.
+func (o *orderService) GetById(IdOrder uint) (*order.UserOrder, error) {
+	result, err := o.orderData.SelectById(IdOrder)
+	return result, err
+}
+
+// CreateAdminOrder implements order.OrderServiceInterface.
+func (o *orderService) CreateAdminOrder(adminIdLogin int, userOrderId uint, inputOrder order.AdminOrder) error {
+	orderIdCheck, err := o.orderData.SelectById(userOrderId)
+	if err != nil {
+		return err
+	}
+
+	if orderIdCheck.ID != userOrderId {
+		return errors.New("ID Order tidak ditemukan atau salah")
+	}
+
+	if inputOrder.Status == "" {
+		return errors.New("Status Harus Di Isi")
+	}
+
+	if inputOrder.WeightItem == 0 {
+		return errors.New("Berat Tidak Boleh Nol")
+	}
+
+	if inputOrder.DeliveryBatch == "" {
+		return errors.New("Batch Pengiriman Tidak Boleh Kosong")
+	}
+
+	if inputOrder.TrackingNumberJastip == "" {
+		return errors.New("No Resi JASTIP Tidak Boleh Kosong")
+	}
+
+	return o.orderData.InsertAdminOrder(adminIdLogin, inputOrder)
+}
+
+// GetUserOrderProcess implements order.OrderServiceInterface.
+func (o *orderService) GetUserOrderProcess(userIdLogin int) ([]order.UserOrder, error) {
+	userOrders, err := o.orderData.SelectUserOrderProcess(userIdLogin)
 	if err != nil {
 		return nil, err
 	}

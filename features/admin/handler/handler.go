@@ -98,3 +98,20 @@ func (handler *AdminHandler) Login(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, responses.WebResponse("Login berhasil", responseData))
 }
+
+func (handler *AdminHandler) CreateRegionCode(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	newRegion := RegionCodeRequest{}
+	errBind := c.Bind(&newRegion)
+	if errBind != nil {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("error bind data, data not valid", nil))
+	}
+
+	regionCore := RequestToRegionCode(newRegion)
+	errInsert := handler.adminService.CreateRegionCode(adminIdLogin, regionCore)
+	if errInsert != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(errInsert.Error(), nil))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Membuat Kode WIlayah Berhasil", nil))
+}

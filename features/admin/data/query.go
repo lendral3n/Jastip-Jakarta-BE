@@ -94,3 +94,15 @@ func (u *adminQuery) Update(adminIdLogin int, photo *multipart.FileHeader) error
 	}
 	return nil
 }
+
+// InsertRegionCode implements admin.AdminDataInterface.
+func (u *adminQuery) InsertRegionCode(input admin.RegionCode) error {
+	dataGorm := RegionCodeToModel(input)
+
+	tx := u.db.Create(&dataGorm)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return nil
+}
+
