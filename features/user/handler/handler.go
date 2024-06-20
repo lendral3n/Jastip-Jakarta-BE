@@ -59,10 +59,7 @@ func (handler *UserHandler) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, responses.WebResponse("error bind data. data not valid", nil))
 	}
 
-	fileHeader, err := c.FormFile("photo_profile") 
-	if err != nil && err != http.ErrMissingFile {
-		return c.JSON(http.StatusBadRequest, responses.WebResponse("error retrieving the file", nil))
-	}
+	fileHeader, _ := c.FormFile("photo_profile")
 
 	userCore := UpdateRequestToUser(userData)
 	errUpdate := handler.userService.Update(userIdLogin, userCore, fileHeader)

@@ -17,7 +17,6 @@ type UserRequest struct {
 type UserUpdateRequest struct {
 	Name         string `json:"name" form:"name"`
 	Email        string `json:"email" form:"email"`
-	Password     string `json:"password" form:"password"`
 	PhoneNumber  int    `json:"phone" form:"phone"`
 	PhotoProfile string `json:"photo_profile" form:"photo_profile"`
 }
@@ -41,7 +40,6 @@ func UpdateRequestToUser(input UserUpdateRequest) user.User {
 	return user.User{
 		Name:         input.Name,
 		Email:        input.Email,
-		Password:     input.Password,
 		PhoneNumber:  input.PhoneNumber,
 		PhotoProfile: input.PhotoProfile,
 	}
