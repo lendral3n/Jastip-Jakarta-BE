@@ -40,14 +40,14 @@ func (u *adminService) CreateSuper(input admin.Admin) error {
 }
 
 // Create implements admin.AdminServiceInterface.
-func (u *adminService) Create(userIdLogin int, input admin.Admin) error {
-	role, err := u.adminData.SelectById(userIdLogin)
+func (u *adminService) Create(adminIdLogin int, input admin.Admin) error {
+	role, err := u.adminData.SelectById(adminIdLogin)
 	if err != nil {
 		return err
 	}
 
 	if role.Role != "Super" {
-		return errors.New("Hanya Super admin yang bisa membuat akun")
+		return errors.New("Anda tidak memiliki akses untuk menggunakan fitur ini")
 	}
 
 	if input.Name == "" {
@@ -121,5 +121,20 @@ func (u *adminService) Update(adminIdLogin int, photo *multipart.FileHeader) err
 		return errors.New("Tidak ada foto yang di upload")
 	}
 	err := u.adminData.Update(adminIdLogin, photo)
+	return err
+}
+
+// CreateRegionCode implements admin.AdminServiceInterface.
+func (u *adminService) CreateRegionCode(adminIdLogin int, input admin.RegionCode) error {
+	role, err := u.adminData.SelectById(adminIdLogin)
+	if err != nil {
+		return err
+	}
+
+	if role.Role != "Super" {
+		return errors.New("Anda tidak memiliki akses untuk menggunakan fitur ini")
+	}
+
+	err = u.adminData.InsertRegionCode(input)
 	return err
 }

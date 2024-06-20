@@ -3,10 +3,9 @@ package database
 import (
 	"fmt"
 	"jastip-jakarta/app/config"
-	ud "jastip-jakarta/features/user/data"
-	od "jastip-jakarta/features/order/data"
 	ad "jastip-jakarta/features/admin/data"
-
+	od "jastip-jakarta/features/order/data"
+	ud "jastip-jakarta/features/user/data"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -27,6 +26,7 @@ func InitDBMysql(cfg *config.AppConfig) *gorm.DB {
 		&od.UserOrder{},
 		&od.AdminOrder{},
 		&ad.Admin{},
+		&ad.RegionCode{},
 	)
 
 	return DB

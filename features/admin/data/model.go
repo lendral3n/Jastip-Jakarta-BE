@@ -15,6 +15,17 @@ type Admin struct {
 	PhoneNumber  int
 	PhotoProfile string
 	Role         string
+	RegionCode   RegionCode `gorm:"foreignKey:AdminID"`
+}
+
+type RegionCode struct {
+	gorm.Model
+	Code        string
+	Region      string
+	FullAddress string
+	PhoneNumber int
+	Price       int
+	AdminID     uint 
 }
 
 func AdminToModel(input admin.Admin) Admin {
@@ -40,5 +51,29 @@ func (u Admin) ModelToAdmin() admin.Admin {
 		Role:         u.Role,
 		CreatedAt:    u.CreatedAt,
 		UpdatedAt:    u.UpdatedAt,
+	}
+}
+
+func RegionCodeToModel(input admin.RegionCode) RegionCode {
+	return RegionCode{
+		Code:        input.Code,
+		Region:      input.Region,
+		FullAddress: input.FullAddress,
+		PhoneNumber: input.PhoneNumber,
+		Price:       input.Price,
+		AdminID:     input.AdminID,
+	}
+}
+
+func (u RegionCode) ModelToRegionCode() admin.RegionCode {
+	return admin.RegionCode{
+		ID:          u.ID,
+		Code:        u.Code,
+		Region:      u.Region,
+		FullAddress: u.FullAddress,
+		PhoneNumber: u.PhoneNumber,
+		Price:       u.Price,
+		CreatedAt:   u.CreatedAt,
+		UpdatedAt:   u.UpdatedAt,
 	}
 }

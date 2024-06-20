@@ -25,14 +25,36 @@ func New(db *gorm.DB, cloudinaryUploader cloudinary.CloudinaryUploaderInterface)
 
 // Insert implements user.UserDataInterface.
 func (u *userQuery) Insert(input user.User) error {
-	dataGorm := UserToModel(input)
+	// Cek apakah email sudah ada
+	var emailCheck User
+	emailResult := u.db.Where("email = ?", input.Email).First(&emailCheck)
+	if emailResult.RowsAffected > 0 {
+		return errors.New("Email sudah terdaftar")
+	}
 
+	// Cek apakah nama sudah ada
+	var nameCheck User
+	nameResult := u.db.Where("name = ?", input.Name).First(&nameCheck)
+	if nameResult.RowsAffected > 0 {
+		return errors.New("Nama sudah terdaftar")
+	}
+
+	// Cek apakah nomor telepon sudah ada
+	var phoneCheck User
+	phoneResult := u.db.Where("phone_number = ?", input.PhoneNumber).First(&phoneCheck)
+	if phoneResult.RowsAffected > 0 {
+		return errors.New("Nomor telepon sudah terdaftar")
+	}
+
+	// Jika tidak ada yang sama, lanjutkan dengan pembuatan akun baru
+	dataGorm := UserToModel(input)
 	tx := u.db.Create(&dataGorm)
 	if tx.Error != nil {
 		return tx.Error
 	}
 	return nil
 }
+
 
 // Login implements user.UserDataInterface.
 func (u *userQuery) Login(phoneOrEmail, password string) (data *user.User, err error) {
@@ -80,13 +102,16 @@ func (u *userQuery) SelectById(userIdLogin int) (*user.User, error) {
 
 // Update implements user.UserDataInterface.
 func (u *userQuery) Update(userIdLogin int, input user.User, photo *multipart.FileHeader) error {
-	imageURL, err := u.cld.UploadImage(photo)
-	if err != nil {
-		return err
-	}
-
 	dataGorm := UserToModel(input)
-	dataGorm.PhotoProfile = imageURL
+
+	// Cek apakah ada file foto yang diupload
+	if photo != nil {
+		imageURL, err := u.cld.UploadImage(photo)
+		if err != nil {
+			return err
+		}
+		dataGorm.PhotoProfile = imageURL
+	}
 
 	tx := u.db.Model(&User{}).Where("id = ?", userIdLogin).Updates(dataGorm)
 	if tx.Error != nil {

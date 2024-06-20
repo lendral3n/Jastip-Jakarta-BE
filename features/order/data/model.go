@@ -1,8 +1,10 @@
 package data
 
 import (
+	ad "jastip-jakarta/features/admin/data"
 	"jastip-jakarta/features/order"
 	ud "jastip-jakarta/features/user/data"
+
 	"time"
 
 	"gorm.io/gorm"
@@ -24,11 +26,14 @@ type UserOrder struct {
 type AdminOrder struct {
 	gorm.Model
 	UserOrderID           uint
+	AdminID               uint
+	Admin                 ad.Admin `gorm:"foreignKey:AdminID"`
 	Status                string
 	WeightItem            float64
 	DeliveryBatch         string
 	PackageWrappedPhoto   string
 	PackageReceivedPhoto  string
+	TrackingNumberJastip  string
 	EstimatedDeliveryTime *time.Time
 }
 
@@ -67,11 +72,13 @@ func (o UserOrder) ModelToUserOrderWait() order.UserOrder {
 func AdminOrderToModel(input order.AdminOrder) AdminOrder {
 	return AdminOrder{
 		UserOrderID:           input.UserOrderID,
+		AdminID:               input.AdminID,
 		Status:                input.Status,
 		WeightItem:            input.WeightItem,
 		DeliveryBatch:         input.DeliveryBatch,
 		PackageWrappedPhoto:   input.PackageWrappedPhoto,
 		PackageReceivedPhoto:  input.PackageReceivedPhoto,
+		TrackingNumberJastip:  input.TrackingNumberJastip,
 		EstimatedDeliveryTime: input.EstimatedDeliveryTime,
 	}
 }
@@ -86,5 +93,6 @@ func (o AdminOrder) ModelToAdminOrder() order.AdminOrder {
 		PackageWrappedPhoto:   o.PackageWrappedPhoto,
 		PackageReceivedPhoto:  o.PackageReceivedPhoto,
 		EstimatedDeliveryTime: o.EstimatedDeliveryTime,
+		TrackingNumberJastip:  o.TrackingNumberJastip,
 	}
 }

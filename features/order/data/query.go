@@ -75,3 +75,58 @@ func (o *orderQuery) SelectUserOrderWait(userIdLogin int) ([]order.UserOrder, er
 
 	return responseOrders, nil
 }
+
+// SelectById implements order.OrderDataInterface.
+func (o *orderQuery) SelectById(IdOrder uint) (*order.UserOrder, error) {
+	var orderDataGorm UserOrder
+	tx := o.db.Preload("User").Preload("AdminOrder").Where("id = ?", IdOrder).First(&orderDataGorm)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	result := orderDataGorm.ModelToUserOrderWait()
+	return &result, nil
+}
+
+// InsertAdminOrder implements order.OrderDataInterface.
+func (o *orderQuery) InsertAdminOrder(adminIdLogin int, inputOrder order.AdminOrder) error {
+	newOrder := AdminOrderToModel(inputOrder)
+	newOrder.AdminID = uint(adminIdLogin)
+
+	result := o.db.Create(&newOrder)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	updateStatus := AdminOrder{
+		Status: inputOrder.Status,
+	}
+
+	result = o.db.Updates(&updateStatus)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+}
+
+// SelectUserOrderProcess implements order.OrderDataInterface.
+func (o *orderQuery) SelectUserOrderProcess(userIdLogin int) ([]order.UserOrder, error) {
+	var userOrders []UserOrder
+
+	err := o.db.Preload("User").Preload("AdminOrder").
+		Joins("JOIN admin_orders ON admin_orders.user_order_id = user_orders.id").
+		Where("user_orders.user_id = ?", userIdLogin).
+		Find(&userOrders).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var responseOrders []order.UserOrder
+	for _, uo := range userOrders {
+		responseOrders = append(responseOrders, uo.ModelToUserOrderWait())
+	}
+
+	return responseOrders, nil
+}

@@ -2,10 +2,8 @@ package handler
 
 import (
 	"jastip-jakarta/features/admin"
-	"log"
-	"time"
+	"jastip-jakarta/utils/time"
 
-	"github.com/tigorlazuardi/tanggal"
 )
 
 type AdminResponse struct {
@@ -20,7 +18,7 @@ type AdminResponse struct {
 }
 
 type AdminResponseOrder struct {
-	Name string `json:"name" form:"name"`
+	Name string `json:"name"`
 }
 
 func AdminToResponse(data *admin.Admin) AdminResponse {
@@ -31,23 +29,7 @@ func AdminToResponse(data *admin.Admin) AdminResponse {
 		PhoneNumber:  data.PhoneNumber,
 		PhotoProfile: data.PhotoProfile,
 		Role:         data.Role,
-		CreatedAt:    formatDateToIndonesian(data.CreatedAt),
-		UpdatedAt:    formatDateToIndonesian(data.UpdatedAt),
+		CreatedAt:    time.FormatDateToIndonesian(data.CreatedAt),
+		UpdatedAt:    time.FormatDateToIndonesian(data.UpdatedAt),
 	}
-}
-
-func formatDateToIndonesian(t time.Time) string {
-	tgl, err := tanggal.Papar(t, "Jakarta", tanggal.WIB)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Menggunakan custom formatting
-	format := []tanggal.Format{
-		tanggal.Hari,
-		tanggal.NamaBulan,
-		tanggal.Tahun,
-	}
-	ss := tgl.Format(" ", format)
-	return ss
 }

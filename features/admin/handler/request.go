@@ -20,6 +20,15 @@ type LoginRequest struct {
 	Password     string `json:"password" form:"password"`
 }
 
+type RegionCodeRequest struct {
+	Code        string `json:"code"`
+	Region      string `json:"region"`
+	FullAddress string `json:"full_address"`
+	PhoneNumber int    `json:"phone"`
+	Price       int    `json:"price"`
+	AdminID     uint   `json:"admin_id_perwakilan"`
+}
+
 func RequestToAdmin(input AdminRequest) admin.Admin {
 	return admin.Admin{
 		ID:          generateID(),
@@ -28,6 +37,17 @@ func RequestToAdmin(input AdminRequest) admin.Admin {
 		Password:    input.Password,
 		PhoneNumber: input.PhoneNumber,
 		Role:        input.Role,
+	}
+}
+
+func RequestToRegionCode(input RegionCodeRequest) admin.RegionCode {
+	return admin.RegionCode{
+		Code:        input.Code,
+		Region:      input.Region,
+		FullAddress: input.FullAddress,
+		PhoneNumber: input.PhoneNumber,
+		Price:       input.Price,
+		AdminID:     input.AdminID,
 	}
 }
 
