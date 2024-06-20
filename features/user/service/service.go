@@ -84,15 +84,6 @@ func (u *userService) Login(phoneOrEmail string, password string) (data *user.Us
 
 // Update implements user.UserServiceInterface.
 func (u *userService) Update(userIdLogin int, input user.User, photo *multipart.FileHeader) error {
-	// Hash password baru jika diubah
-	if input.Password != "" {
-		hashedPass, errHash := u.hashService.HashPassword(input.Password)
-		if errHash != nil {
-			return errors.New("Error hash password.")
-		}
-		input.Password = hashedPass
-	}
-
 	err := u.userData.Update(userIdLogin, input, photo)
 	return err
 }
