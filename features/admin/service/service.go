@@ -26,7 +26,7 @@ func (u *adminService) CreateSuper(input admin.Admin) error {
 	if input.Password != "" {
 		hashedPass, errHash := u.hashService.HashPassword(input.Password)
 		if errHash != nil {
-			return errors.New("Error hash password.")
+			return errors.New("error hash password")
 		}
 		input.Password = hashedPass
 	}
@@ -47,29 +47,29 @@ func (u *adminService) Create(adminIdLogin int, input admin.Admin) error {
 	}
 
 	if role.Role != "Super" {
-		return errors.New("Anda tidak memiliki akses untuk menggunakan fitur ini")
+		return errors.New("anda tidak memiliki akses untuk menggunakan fitur ini")
 	}
 
 	if input.Name == "" {
-		return errors.New("Nama tidak boleh kosong")
+		return errors.New("nama tidak boleh kosong")
 	}
 	if input.Email == "" {
-		return errors.New("Email tidak boleh kosong")
+		return errors.New("email tidak boleh kosong")
 	}
 	if input.Password == "" {
-		return errors.New("Password tidak boleh kosong")
+		return errors.New("password tidak boleh kosong")
 	}
 	if input.PhoneNumber == 0 {
-		return errors.New("Nomor Telephone tidak boleh kosong")
+		return errors.New("nomor Telephone tidak boleh kosong")
 	}
 	if input.Role == "" {
-		return errors.New("Role tidak boleh kosong")
+		return errors.New("role tidak boleh kosong")
 	}
 
 	if input.Password != "" {
 		hashedPass, errHash := u.hashService.HashPassword(input.Password)
 		if errHash != nil {
-			return errors.New("Error hash password.")
+			return errors.New("error hash password")
 		}
 		input.Password = hashedPass
 	}
@@ -91,10 +91,10 @@ func (u *adminService) GetById(adminIdLogin int) (*admin.Admin, error) {
 func (u *adminService) Login(phoneOrEmail string, password string) (data *admin.Admin, token string, err error) {
 	// Validasi jika email atau password kosong
 	if phoneOrEmail == "" {
-		return nil, "", errors.New("Email atau nomor telepon tidak boleh kosong")
+		return nil, "", errors.New("email atau nomor telepon tidak boleh kosong")
 	}
 	if password == "" {
-		return nil, "", errors.New("Password tidak boleh kosong")
+		return nil, "", errors.New("password tidak boleh kosong")
 	}
 
 	data, err = u.adminData.Login(phoneOrEmail, password)
@@ -104,7 +104,7 @@ func (u *adminService) Login(phoneOrEmail string, password string) (data *admin.
 
 	isValid := u.hashService.CheckPasswordHash(data.Password, password)
 	if !isValid {
-		return nil, "", errors.New("Sandi Salah")
+		return nil, "", errors.New("sandi salah")
 	}
 
 	token, errJwt := middlewares.CreateToken(int(data.ID))
@@ -118,7 +118,7 @@ func (u *adminService) Login(phoneOrEmail string, password string) (data *admin.
 // Update implements admin.AdminServiceInterface.
 func (u *adminService) Update(adminIdLogin int, photo *multipart.FileHeader) error {
 	if photo == nil {
-		return errors.New("Tidak ada foto yang di upload")
+		return errors.New("tidak ada foto yang di upload")
 	}
 	err := u.adminData.Update(adminIdLogin, photo)
 	return err
@@ -132,9 +132,23 @@ func (u *adminService) CreateRegionCode(adminIdLogin int, input admin.RegionCode
 	}
 
 	if role.Role != "Super" {
-		return errors.New("Anda tidak memiliki akses untuk menggunakan fitur ini")
+		return errors.New("anda tidak memiliki akses untuk menggunakan fitur ini")
 	}
 
 	err = u.adminData.InsertRegionCode(input)
 	return err
+}
+
+// GetAllRegionCode implements admin.AdminServiceInterface.
+func (u *adminService) GetAllRegionCode() ([]admin.RegionCode, error) {
+	return u.adminData.SelectAllRegionCode()
+}
+
+// GettByIdRegion implements admin.AdminServiceInterface.
+func (u *adminService) GettByIdRegion(IdRegion string) (*admin.RegionCode, error) {
+	regionCode, err := u.adminData.SelectByIdRegion(IdRegion)
+    if err != nil {
+        return nil, err
+    }
+    return regionCode, nil
 }

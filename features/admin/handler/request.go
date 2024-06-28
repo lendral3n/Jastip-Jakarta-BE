@@ -42,7 +42,7 @@ func RequestToAdmin(input AdminRequest) admin.Admin {
 
 func RequestToRegionCode(input RegionCodeRequest) admin.RegionCode {
 	return admin.RegionCode{
-		Code:        input.Code,
+		ID:          input.Code,
 		Region:      input.Region,
 		FullAddress: input.FullAddress,
 		PhoneNumber: input.PhoneNumber,

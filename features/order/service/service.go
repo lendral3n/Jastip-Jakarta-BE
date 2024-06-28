@@ -2,36 +2,44 @@ package service
 
 import (
 	"errors"
+	"jastip-jakarta/features/admin"
 	"jastip-jakarta/features/order"
 )
 
 type orderService struct {
-	orderData order.OrderDataInterface
+	orderData    order.OrderDataInterface
+	adminService admin.AdminServiceInterface
 }
 
-func New(repo order.OrderDataInterface) order.OrderServiceInterface {
+func New(repo order.OrderDataInterface, adminService admin.AdminServiceInterface) order.OrderServiceInterface {
 	return &orderService{
-		orderData: repo,
+		orderData:    repo,
+		adminService: adminService,
 	}
 }
 
 // CreateOrder implements order.OrderServiceInterface.
 func (o *orderService) CreateUserOrder(userIdLogin int, inputOrder order.UserOrder) error {
 	if inputOrder.ItemName == "" {
-		return errors.New("Nama Barang harus diisi")
+		return errors.New("nama Barang harus diisi")
 	}
 	if inputOrder.TrackingNumber == "" {
-		return errors.New("Nomor resi harus diisi")
+		return errors.New("nomor resi harus diisi")
 	}
 	if inputOrder.OnlineStore == "" {
-		return errors.New("Nama toko online harus diisi")
+		return errors.New("nama toko online harus diisi")
 	}
 	if inputOrder.WhatsAppNumber == 0 {
-		return errors.New("Nomor WhatsApp harus diisi")
+		return errors.New("nomor WhatsApp harus diisi")
 	}
 	if inputOrder.RegionCode == "" {
-		return errors.New("Kode wilayah harus diisi")
+		return errors.New("kode wilayah harus diisi")
 	}
+
+	_, err := o.adminService.GettByIdRegion(inputOrder.RegionCode)
+    if err != nil {
+        return err
+    }
 
 	return o.orderData.InsertUserOrder(userIdLogin, inputOrder)
 }
@@ -51,7 +59,7 @@ func (o *orderService) UpdateUserOrder(userIdLogin int, userOrderId uint, inputO
 			return err
 		}
 	} else {
-		return errors.New("Order tidak dapat diupdate karena status bukan 'Menunggu Diterima'")
+		return errors.New("order tidak dapat diupdate karena status bukan 'Menunggu Diterima'")
 	}
 
 	return nil
@@ -72,8 +80,8 @@ func (o *orderService) GetById(IdOrder uint) (*order.UserOrder, error) {
 	return result, err
 }
 
-// CreateAdminOrder implements order.OrderServiceInterface.
-func (o *orderService) CreateAdminOrder(adminIdLogin int, userOrderId uint, inputOrder order.AdminOrder) error {
+// CreateOrderDetail implements order.OrderServiceInterface.
+func (o *orderService) CreateOrderDetail(adminIdLogin int, userOrderId uint, inputOrder order.OrderDetail) error {
 	orderIdCheck, err := o.orderData.SelectById(userOrderId)
 	if err != nil {
 		return err
@@ -84,27 +92,36 @@ func (o *orderService) CreateAdminOrder(adminIdLogin int, userOrderId uint, inpu
 	}
 
 	if inputOrder.Status == "" {
-		return errors.New("Status Harus Di Isi")
+		return errors.New("status Harus Di Isi")
 	}
 
 	if inputOrder.WeightItem == 0 {
-		return errors.New("Berat Tidak Boleh Nol")
+		return errors.New("berat Tidak Boleh Nol")
 	}
 
 	if inputOrder.DeliveryBatch == "" {
-		return errors.New("Batch Pengiriman Tidak Boleh Kosong")
+		return errors.New("batch Pengiriman Tidak Boleh Kosong")
 	}
 
 	if inputOrder.TrackingNumberJastip == "" {
-		return errors.New("No Resi JASTIP Tidak Boleh Kosong")
+		return errors.New("no Resi JASTIP Tidak Boleh Kosong")
 	}
 
-	return o.orderData.InsertAdminOrder(adminIdLogin, inputOrder)
+	return o.orderData.InsertOrderDetail(adminIdLogin, inputOrder)
 }
 
 // GetUserOrderProcess implements order.OrderServiceInterface.
 func (o *orderService) GetUserOrderProcess(userIdLogin int) ([]order.UserOrder, error) {
 	userOrders, err := o.orderData.SelectUserOrderProcess(userIdLogin)
+	if err != nil {
+		return nil, err
+	}
+	return userOrders, nil
+}
+
+// SearchUserOrder implements order.OrderServiceInterface.
+func (o *orderService) SearchUserOrder(userIdLogin int, itemName string) ([]order.UserOrder, error) {
+	userOrders, err := o.orderData.SearchUserOrder(userIdLogin, itemName)
 	if err != nil {
 		return nil, err
 	}

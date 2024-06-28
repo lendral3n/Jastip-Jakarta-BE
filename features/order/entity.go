@@ -15,16 +15,17 @@ type UserOrder struct {
 	OnlineStore    string
 	WhatsAppNumber int
 	RegionCode     string
+	Region         ad.RegionCode
 	User           ud.User
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
-	AdminOrders    AdminOrder
+	OrderDetails   OrderDetail
 }
 
-type AdminOrder struct {
+type OrderDetail struct {
 	ID                    uint
 	UserOrderID           uint
-	AdminID               uint
+	AdminID               *uint
 	Status                string
 	WeightItem            float64
 	DeliveryBatch         string
@@ -45,7 +46,8 @@ type OrderDataInterface interface {
 	SelectUserOrderWait(userIdLogin int) ([]UserOrder, error)
 	SelectUserOrderProcess(userIdLogin int) ([]UserOrder, error)
 	SelectById(IdOrder uint) (*UserOrder, error)
-	InsertAdminOrder(adminIdLogin int, inputOrder AdminOrder) error
+	SearchUserOrder(userIdLogin int, itemName string) ([]UserOrder, error)
+	InsertOrderDetail(adminIdLogin int, inputOrder OrderDetail) error
 }
 
 // interface untuk Service Layer
@@ -55,5 +57,6 @@ type OrderServiceInterface interface {
 	GetUserOrderWait(userIdLogin int) ([]UserOrder, error)
 	GetUserOrderProcess(userIdLogin int) ([]UserOrder, error)
 	GetById(IdOrder uint) (*UserOrder, error)
-	CreateAdminOrder(adminIdLogin int, userOrderId uint, inputOrder AdminOrder) error
+	SearchUserOrder(userIdLogin int, itemName string) ([]UserOrder, error)
+	CreateOrderDetail(adminIdLogin int, userOrderId uint, inputOrder OrderDetail) error
 }

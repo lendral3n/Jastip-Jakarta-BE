@@ -19,13 +19,13 @@ type Admin struct {
 }
 
 type RegionCode struct {
+	ID string `gorm:"type:varchar(255);primaryKey" json:"id"`
 	gorm.Model
-	Code        string
 	Region      string
 	FullAddress string
 	PhoneNumber int
 	Price       int
-	AdminID     uint 
+	AdminID     uint
 }
 
 func AdminToModel(input admin.Admin) Admin {
@@ -56,7 +56,7 @@ func (u Admin) ModelToAdmin() admin.Admin {
 
 func RegionCodeToModel(input admin.RegionCode) RegionCode {
 	return RegionCode{
-		Code:        input.Code,
+		ID:          input.ID,
 		Region:      input.Region,
 		FullAddress: input.FullAddress,
 		PhoneNumber: input.PhoneNumber,
@@ -68,11 +68,11 @@ func RegionCodeToModel(input admin.RegionCode) RegionCode {
 func (u RegionCode) ModelToRegionCode() admin.RegionCode {
 	return admin.RegionCode{
 		ID:          u.ID,
-		Code:        u.Code,
 		Region:      u.Region,
 		FullAddress: u.FullAddress,
 		PhoneNumber: u.PhoneNumber,
 		Price:       u.Price,
+		AdminID:     u.AdminID,
 		CreatedAt:   u.CreatedAt,
 		UpdatedAt:   u.UpdatedAt,
 	}

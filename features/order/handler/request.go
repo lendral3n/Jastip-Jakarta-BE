@@ -12,10 +12,10 @@ type UserOrderRequest struct {
 	TrackingNumber string `json:"tracking_number"`
 	OnlineStore    string `json:"online_store"`
 	WhatsAppNumber int    `json:"whatsapp_number"`
-	RegionCode     string `json:"region_code"`
+	Code           string `json:"code"`
 }
 
-type AdminOrderRequest struct {
+type OrderDetailRequest struct {
 	Status                string     `json:"status"`
 	WeightItem            float64    `json:"weight_item"`
 	DeliveryBatch         string     `json:"delivery_path"`
@@ -36,7 +36,7 @@ func RequestToUserOrder(input UserOrderRequest) order.UserOrder {
 		TrackingNumber: input.TrackingNumber,
 		OnlineStore:    input.OnlineStore,
 		WhatsAppNumber: input.WhatsAppNumber,
-		RegionCode:     input.RegionCode,
+		RegionCode:     input.Code,
 	}
 }
 
@@ -46,12 +46,12 @@ func RequestUpdateToUserOrder(input UserOrderRequest) order.UserOrder {
 		TrackingNumber: input.TrackingNumber,
 		OnlineStore:    input.OnlineStore,
 		WhatsAppNumber: input.WhatsAppNumber,
-		RegionCode:     input.RegionCode,
+		RegionCode:     input.Code,
 	}
 }
 
-func RequestToAdminOrder(input AdminOrderRequest) order.AdminOrder {
-	return order.AdminOrder{
+func RequestToOrderDetail(input OrderDetailRequest) order.OrderDetail {
+	return order.OrderDetail{
 		Status:                input.Status,
 		WeightItem:            input.WeightItem,
 		TrackingNumberJastip:  input.TrackingNumberjastip,

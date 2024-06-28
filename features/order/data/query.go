@@ -2,6 +2,7 @@ package data
 
 import (
 	"jastip-jakarta/features/order"
+	"log"
 
 	"gorm.io/gorm"
 )
@@ -26,12 +27,13 @@ func (o *orderQuery) InsertUserOrder(userIdLogin int, inputOrder order.UserOrder
 		return result.Error
 	}
 
-	adminOrder := AdminOrder{
+	detailOrder := OrderDetail{
 		UserOrderID: newOrder.ID,
 		Status:      "Menunggu Diterima",
+		AdminID: nil,
 	}
 
-	result = o.db.Create(&adminOrder)
+	result = o.db.Create(&detailOrder)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -47,7 +49,7 @@ func (o *orderQuery) PutUserOrder(userIdLogin int, userOrderId uint, inputOrder 
 
 // CheckOrderStatus implements order.OrderDataInterface.
 func (o *orderQuery) CheckOrderStatus(userOrderId uint) (string, error) {
-	var adminOrder AdminOrder
+	var adminOrder OrderDetail
 	result := o.db.Select("status").Where("user_order_id = ?", userOrderId).First(&adminOrder)
 	if result.Error != nil {
 		return "", result.Error
@@ -59,9 +61,9 @@ func (o *orderQuery) CheckOrderStatus(userOrderId uint) (string, error) {
 func (o *orderQuery) SelectUserOrderWait(userIdLogin int) ([]order.UserOrder, error) {
 	var userOrders []UserOrder
 
-	err := o.db.Preload("User").Preload("AdminOrder").
-		Joins("JOIN admin_orders ON admin_orders.user_order_id = user_orders.id").
-		Where("user_orders.user_id = ? AND admin_orders.status = ?", userIdLogin, "Menunggu Diterima").
+	err := o.db.Preload("User").Preload("OrderDetail").Preload("Region").
+		Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
+		Where("user_orders.user_id = ? AND order_details.status = ?", userIdLogin, "Menunggu Diterima").
 		Find(&userOrders).Error
 
 	if err != nil {
@@ -78,27 +80,32 @@ func (o *orderQuery) SelectUserOrderWait(userIdLogin int) ([]order.UserOrder, er
 
 // SelectById implements order.OrderDataInterface.
 func (o *orderQuery) SelectById(IdOrder uint) (*order.UserOrder, error) {
-	var orderDataGorm UserOrder
-	tx := o.db.Preload("User").Preload("AdminOrder").Where("id = ?", IdOrder).First(&orderDataGorm)
-	if tx.Error != nil {
-		return nil, tx.Error
+	var userOrderData UserOrder
+	err := o.db.Preload("User").
+		Preload("Region").
+		Preload("OrderDetail").
+		First(&userOrderData, IdOrder).Error
+	if err != nil {
+		log.Printf("Error finding order with ID %d: %v", IdOrder, err)
+		return nil, err
 	}
-
-	result := orderDataGorm.ModelToUserOrderWait()
+	result := userOrderData.ModelToUserOrderWait()
 	return &result, nil
 }
 
-// InsertAdminOrder implements order.OrderDataInterface.
-func (o *orderQuery) InsertAdminOrder(adminIdLogin int, inputOrder order.AdminOrder) error {
-	newOrder := AdminOrderToModel(inputOrder)
-	newOrder.AdminID = uint(adminIdLogin)
+
+// InsertOrderDetail implements order.OrderDataInterface.
+func (o *orderQuery) InsertOrderDetail(adminIdLogin int, inputOrder order.OrderDetail) error {
+	newOrder := OrderDetailToModel(inputOrder)
+	adminID := uint(adminIdLogin)
+	newOrder.AdminID = &adminID
 
 	result := o.db.Create(&newOrder)
 	if result.Error != nil {
 		return result.Error
 	}
 
-	updateStatus := AdminOrder{
+	updateStatus := OrderDetail{
 		Status: inputOrder.Status,
 	}
 
@@ -114,9 +121,30 @@ func (o *orderQuery) InsertAdminOrder(adminIdLogin int, inputOrder order.AdminOr
 func (o *orderQuery) SelectUserOrderProcess(userIdLogin int) ([]order.UserOrder, error) {
 	var userOrders []UserOrder
 
-	err := o.db.Preload("User").Preload("AdminOrder").
-		Joins("JOIN admin_orders ON admin_orders.user_order_id = user_orders.id").
+	err := o.db.Preload("User").Preload("OrderDetail").Preload("Region").
+		Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
 		Where("user_orders.user_id = ?", userIdLogin).
+		Find(&userOrders).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var responseOrders []order.UserOrder
+	for _, uo := range userOrders {
+		responseOrders = append(responseOrders, uo.ModelToUserOrderWait())
+	}
+
+	return responseOrders, nil
+}
+
+// SearchUserOrder implements order.OrderDataInterface.
+func (o *orderQuery) SearchUserOrder(userIdLogin int, itemName string) ([]order.UserOrder, error) {
+	var userOrders []UserOrder
+
+	err := o.db.Preload("User").Preload("OrderDetail").Preload("Region").
+		Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
+		Where("user_orders.user_id = ? AND user_orders.item_name LIKE ?", userIdLogin, "%"+itemName+"%").
 		Find(&userOrders).Error
 
 	if err != nil {
