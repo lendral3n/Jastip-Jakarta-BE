@@ -43,7 +43,8 @@ func (o *orderQuery) InsertUserOrder(userIdLogin int, inputOrder order.UserOrder
 
 // PutUserOrder implements order.OrderDataInterface.
 func (o *orderQuery) PutUserOrder(userIdLogin int, userOrderId uint, inputOrder order.UserOrder) error {
-	result := o.db.Model(&UserOrder{}).Where("id = ?", userOrderId).Updates(inputOrder)
+	putOrder := UserOrderToModel(inputOrder)
+	result := o.db.Model(&UserOrder{}).Where("id = ?", userOrderId).Updates(putOrder)
 	return result.Error
 }
 
