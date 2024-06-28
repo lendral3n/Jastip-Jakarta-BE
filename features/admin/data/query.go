@@ -44,7 +44,7 @@ func (u *adminQuery) Login(phoneOrEmail, password string) (data *admin.Admin, er
 		err = u.db.Where("email = ?", phoneOrEmail).First(&adminDataGorm).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New("Email tidak terdaftar")
+				return nil, errors.New("email tidak terdaftar")
 			}
 			return nil, err
 		}
@@ -52,12 +52,12 @@ func (u *adminQuery) Login(phoneOrEmail, password string) (data *admin.Admin, er
 		// Cari admin dengan Nomor Telepon
 		phone, convErr := strconv.Atoi(phoneOrEmail)
 		if convErr != nil {
-			return nil, errors.New("Format nomor telepon tidak valid")
+			return nil, errors.New("format nomor telepon tidak valid")
 		}
 		err = u.db.Where("phone_number = ?", phone).First(&adminDataGorm).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New("Nomor telepon tidak terdaftar")
+				return nil, errors.New("nomor telepon tidak terdaftar")
 			}
 			return nil, err
 		}
@@ -106,3 +106,32 @@ func (u *adminQuery) InsertRegionCode(input admin.RegionCode) error {
 	return nil
 }
 
+// SelectAllRegionCode implements admin.AdminDataInterface.
+func (u *adminQuery) SelectAllRegionCode() ([]admin.RegionCode, error) {
+	var regionCodes []RegionCode
+
+	err := u.db.Find(&regionCodes).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var responseRegionCodes []admin.RegionCode
+	for _, rc := range regionCodes {
+		responseRegionCodes = append(responseRegionCodes, rc.ModelToRegionCode())
+	}
+
+	return responseRegionCodes, nil
+}
+
+// SelectByIdRegion implements admin.AdminDataInterface.
+func (a *adminQuery) SelectByIdRegion(IdRegion string) (*admin.RegionCode, error) {
+	var regionCode admin.RegionCode
+	err := a.db.Where("id = ?", IdRegion).First(&regionCode).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("kode wilayah tidak ditemukan")
+		}
+		return nil, err
+	}
+	return &regionCode, nil
+}

@@ -19,14 +19,15 @@ type UserOrder struct {
 	TrackingNumber string
 	OnlineStore    string
 	WhatsappNumber int
-	RegionCode     string
-	AdminOrder     AdminOrder
+	RegionCodeID   string
+	Region         ad.RegionCode `gorm:"foreignKey:RegionCodeID"`
+	OrderDetail    OrderDetail
 }
 
-type AdminOrder struct {
+type OrderDetail struct {
 	gorm.Model
 	UserOrderID           uint
-	AdminID               uint
+	AdminID               *uint         `gorm:"default:null"`
 	Admin                 ad.Admin `gorm:"foreignKey:AdminID"`
 	Status                string
 	WeightItem            float64
@@ -37,8 +38,8 @@ type AdminOrder struct {
 	EstimatedDeliveryTime *time.Time
 }
 
-func AdminOrderStatusToModel(updateStatus order.AdminOrder) AdminOrder {
-	return AdminOrder{
+func OrderDetailStatusToModel(updateStatus order.OrderDetail) OrderDetail {
+	return OrderDetail{
 		Status: updateStatus.Status,
 	}
 }
@@ -51,7 +52,7 @@ func UserOrderToModel(input order.UserOrder) UserOrder {
 		TrackingNumber: input.TrackingNumber,
 		OnlineStore:    input.OnlineStore,
 		WhatsappNumber: input.WhatsAppNumber,
-		RegionCode:     input.RegionCode,
+		RegionCodeID:   input.RegionCode,
 	}
 }
 
@@ -63,14 +64,14 @@ func (o UserOrder) ModelToUserOrderWait() order.UserOrder {
 		TrackingNumber: o.TrackingNumber,
 		OnlineStore:    o.OnlineStore,
 		WhatsAppNumber: o.WhatsappNumber,
-		RegionCode:     o.RegionCode,
+		Region:         o.Region.ModelToRegionCode(),
 		User:           o.User.ModelToUser(),
-		AdminOrders:    o.AdminOrder.ModelToAdminOrder(),
+		OrderDetails:   o.OrderDetail.ModelToOrderDetail(),
 	}
 }
 
-func AdminOrderToModel(input order.AdminOrder) AdminOrder {
-	return AdminOrder{
+func OrderDetailToModel(input order.OrderDetail) OrderDetail {
+	return OrderDetail{
 		UserOrderID:           input.UserOrderID,
 		AdminID:               input.AdminID,
 		Status:                input.Status,
@@ -83,8 +84,8 @@ func AdminOrderToModel(input order.AdminOrder) AdminOrder {
 	}
 }
 
-func (o AdminOrder) ModelToAdminOrder() order.AdminOrder {
-	return order.AdminOrder{
+func (o OrderDetail) ModelToOrderDetail() order.OrderDetail {
+	return order.OrderDetail{
 		ID:                    o.ID,
 		UserOrderID:           o.UserOrderID,
 		Status:                o.Status,

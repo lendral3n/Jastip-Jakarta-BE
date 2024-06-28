@@ -101,7 +101,7 @@ func (handler *OrderHandler) GetOrderById(c echo.Context) error {
 	return c.JSON(http.StatusOK, responses.WebResponse("success read data.", orderResult))
 }
 
-func (handler *OrderHandler) CreateAdminOrder(c echo.Context) error {
+func (handler *OrderHandler) CreateOrderDetail(c echo.Context) error {
 	userIdLogin := middlewares.ExtractTokenUserId(c)
 	if userIdLogin == 0 {
 		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
@@ -112,14 +112,14 @@ func (handler *OrderHandler) CreateAdminOrder(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, responses.WebResponse("ID order tidak valid", nil))
 	}
 
-	newOrder := AdminOrderRequest{}
+	newOrder := OrderDetailRequest{}
 	errBind := c.Bind(&newOrder)
 	if errBind != nil {
 		return c.JSON(http.StatusBadRequest, responses.WebResponse("error bind data. data order not valid", nil))
 	}
 
-	orderCore := RequestToAdminOrder(newOrder)
-	errInsert := handler.orderService.CreateAdminOrder(userIdLogin, uint(orderId), orderCore)
+	orderCore := RequestToOrderDetail(newOrder)
+	errInsert := handler.orderService.CreateOrderDetail(userIdLogin, uint(orderId), orderCore)
 	if errInsert != nil {
 		return c.JSON(http.StatusInternalServerError, responses.WebResponse(errInsert.Error(), nil))
 	}
@@ -141,4 +141,28 @@ func (handler *OrderHandler) GetUserOrderProcess(c echo.Context) error {
 	groupedResponses := CoreToResponseUserOrderProcess(userOrders)
 
 	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mendapatkan orderan yang diproses", groupedResponses))
+}
+
+func (handler *OrderHandler) SearchUserOrder(c echo.Context) error {
+	userIdLogin := middlewares.ExtractTokenUserId(c)
+	if userIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	itemName := c.Param("item_name")
+	if itemName == "" {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("Nama barang tidak boleh kosong", nil))
+	}
+
+	userOrders, err := handler.orderService.SearchUserOrder(userIdLogin, itemName)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	var userOrderResponses []UserOrderWaitResponse
+	for _, userOrder := range userOrders {
+		userOrderResponses = append(userOrderResponses, CoreToResponseUserOrderWait(userOrder))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mencari orderan", userOrderResponses))
 }

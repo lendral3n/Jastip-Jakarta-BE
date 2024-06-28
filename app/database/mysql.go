@@ -24,7 +24,7 @@ func InitDBMysql(cfg *config.AppConfig) *gorm.DB {
 	DB.AutoMigrate(
 		&ud.User{},
 		&od.UserOrder{},
-		&od.AdminOrder{},
+		&od.OrderDetail{},
 		&ad.Admin{},
 		&ad.RegionCode{},
 	)

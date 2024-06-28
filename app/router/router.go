@@ -34,7 +34,7 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	adminHandlerAPI := ah.New(adminService)
 
 	orderData := od.New(db)
-	orderService := os.New(orderData)
+	orderService := os.New(orderData, adminService)
 	orderHandlerAPI := oh.New(orderService)
 
 	// define routes/ endpoint USERS
@@ -52,6 +52,8 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 
 	// define routes/ endpoint REGION
 	e.POST("/admin/region", adminHandlerAPI.CreateRegionCode, middlewares.JWTMiddleware())
+	e.GET("/region", adminHandlerAPI.GetRegionCode)
+	e.GET("/region/:code", adminHandlerAPI.GetRegionCodeById)
 
 	// define routes/ endpoint USER ORDER
 	e.POST("/users/order", orderHandlerAPI.CreateUserOrder, middlewares.JWTMiddleware())
@@ -59,7 +61,8 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	e.GET("/users/order/wait", orderHandlerAPI.GetUserOrderWait, middlewares.JWTMiddleware())
 	e.GET("/users/order/:order_id", orderHandlerAPI.GetOrderById)
 	e.GET("/users/order/process", orderHandlerAPI.GetUserOrderProcess, middlewares.JWTMiddleware())
+	e.GET("/users/order/search", orderHandlerAPI.SearchUserOrder, middlewares.JWTMiddleware())
 
 	// define routes/ endpoint ADMIN ORDER
-	e.POST("/admin/order", orderHandlerAPI.CreateAdminOrder, middlewares.JWTMiddleware())
+	e.POST("/admin/order", orderHandlerAPI.CreateOrderDetail, middlewares.JWTMiddleware())
 }

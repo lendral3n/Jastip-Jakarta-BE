@@ -115,3 +115,31 @@ func (handler *AdminHandler) CreateRegionCode(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, responses.WebResponse("Membuat Kode WIlayah Berhasil", nil))
 }
+
+func (handler *AdminHandler) GetRegionCode(c echo.Context) error {
+	regionCodes, err := handler.adminService.GetAllRegionCode()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	var regionCodeResponses []RegionCodeResponse
+	for _, regionCode := range regionCodes {
+		regionCodeResponses = append(regionCodeResponses, CoreToResponseRegionCode(regionCode))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mengambil kode region", regionCodeResponses))
+}
+
+func (handler *AdminHandler) GetRegionCodeById(c echo.Context) error {
+	IdRegion := c.Param("code")
+
+	regionCode, err := handler.adminService.GettByIdRegion(IdRegion)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	// Convert data to response format
+	regionCodeResponse := CoreToResponseRegionCode(*regionCode)
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mengambil kode region", regionCodeResponse))
+}

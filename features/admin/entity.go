@@ -19,8 +19,7 @@ type Admin struct {
 }
 
 type RegionCode struct {
-	ID          uint
-	Code        string
+	ID          string
 	Region      string
 	FullAddress  string
 	PhoneNumber int
@@ -37,6 +36,8 @@ type AdminDataInterface interface {
 	SelectById(adminIdLogin int) (*Admin, error)
 	Login(phoneOrEmail, password string) (data *Admin, err error)
 	InsertRegionCode(input RegionCode) error
+	SelectAllRegionCode() ([]RegionCode, error)
+	SelectByIdRegion(IdRegion string) (*RegionCode, error)
 }
 
 // interface untuk Service Layer
@@ -47,4 +48,6 @@ type AdminServiceInterface interface {
 	Update(adminIdLogin int, photo *multipart.FileHeader) error
 	Login(phoneOrEmail, password string) (data *Admin, token string, err error)
 	CreateRegionCode(adminIdLogin int, input RegionCode) error
+	GetAllRegionCode() ([]RegionCode, error)
+	GettByIdRegion(IdRegion string) (*RegionCode, error)
 }
