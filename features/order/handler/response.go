@@ -44,6 +44,7 @@ type OrderResponseById struct {
 	Name           string `json:"name"`
 	ItemName       string `json:"item_name"`
 	TrackingNumber string `json:"tracking_number"`
+	TrackingNumberJastip string `json:"tracking_number_jastip"`
 	OnlineStore    string `json:"online_store"`
 	Code           string `json:"code"`
 	Region         string `json:"region"`
@@ -65,6 +66,7 @@ func CoreToResponseUserOrderById(data order.UserOrder) OrderResponseById {
 		WeightItem:     int(data.OrderDetails.WeightItem),
 		Name:           data.User.Name,
 		Status:         data.OrderDetails.Status,
+		TrackingNumberJastip: data.OrderDetails.TrackingNumberJastip,
 	}
 }
 

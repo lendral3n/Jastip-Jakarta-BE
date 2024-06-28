@@ -6,12 +6,12 @@ import (
 )
 
 type AdminResponse struct {
-	ID           uint   `json:"admin_id" form:"admin_id"`
-	Name         string `json:"name" form:"name"`
-	Role         string `json:"role" form:"role"`
-	Email        string `json:"email" form:"email"`
-	PhoneNumber  int    `json:"phone_number" form:"phone_number"`
-	PhotoProfile string `json:"photo_profile" form:"photo_profile"`
+	ID           uint   `json:"admin_id"`
+	Name         string `json:"name"`
+	Role         string `json:"role"`
+	Email        string `json:"email"`
+	PhoneNumber  int    `json:"phone_number"`
+	PhotoProfile string `json:"photo_profile"`
 	CreatedAt    string `json:"create_account"`
 	UpdatedAt    string `json:"last_update"`
 }

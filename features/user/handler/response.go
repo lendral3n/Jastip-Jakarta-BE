@@ -6,11 +6,11 @@ import (
 )
 
 type UserResponse struct {
-	ID           uint   `json:"user_id" form:"user_id"`
-	Name         string `json:"name" form:"name"`
-	Email        string `json:"email" form:"email"`
-	PhoneNumber  int    `json:"phone_number" form:"phone_number"`
-	PhotoProfile string `json:"photo_profile" form:"photo_profile"`
+	ID           uint   `json:"user_id"`
+	Name         string `json:"name"`
+	Email        string `json:"email"`
+	PhoneNumber  int    `json:"phone_number"`
+	PhotoProfile string `json:"photo_profile"`
 	CreatedAt    string `json:"create_account"`
 	UpdatedAt    string `json:"last_update"`
 }
