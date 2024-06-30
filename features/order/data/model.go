@@ -27,7 +27,7 @@ type UserOrder struct {
 type OrderDetail struct {
 	gorm.Model
 	UserOrderID           uint
-	AdminID               *uint         `gorm:"default:null"`
+	AdminID               *uint    `gorm:"default:null"`
 	Admin                 ad.Admin `gorm:"foreignKey:AdminID"`
 	Status                string
 	WeightItem            float64

@@ -48,6 +48,7 @@ type OrderDataInterface interface {
 	SelectById(IdOrder uint) (*UserOrder, error)
 	SearchUserOrder(userIdLogin int, itemName string) ([]UserOrder, error)
 	InsertOrderDetail(adminIdLogin int, inputOrder OrderDetail) error
+	SelectAllUserOrderWait() ([]UserOrder, error)
 }
 
 // interface untuk Service Layer
@@ -59,4 +60,5 @@ type OrderServiceInterface interface {
 	GetById(IdOrder uint) (*UserOrder, error)
 	SearchUserOrder(userIdLogin int, itemName string) ([]UserOrder, error)
 	CreateOrderDetail(adminIdLogin int, userOrderId uint, inputOrder OrderDetail) error
+	GetAllUserOrderWait(adminIdLogin int) ([]UserOrder, error)
 }

@@ -37,9 +37,9 @@ func (o *orderService) CreateUserOrder(userIdLogin int, inputOrder order.UserOrd
 	}
 
 	_, err := o.adminService.GettByIdRegion(inputOrder.RegionCode)
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
 	return o.orderData.InsertUserOrder(userIdLogin, inputOrder)
 }
@@ -82,6 +82,11 @@ func (o *orderService) GetById(IdOrder uint) (*order.UserOrder, error) {
 
 // CreateOrderDetail implements order.OrderServiceInterface.
 func (o *orderService) CreateOrderDetail(adminIdLogin int, userOrderId uint, inputOrder order.OrderDetail) error {
+	adminCheck, err := o.adminService.GetById(adminIdLogin)
+	if err != nil || adminCheck == nil {
+		return errors.New("anda bukan admin")
+	}
+
 	orderIdCheck, err := o.orderData.SelectById(userOrderId)
 	if err != nil {
 		return err
@@ -125,5 +130,20 @@ func (o *orderService) SearchUserOrder(userIdLogin int, itemName string) ([]orde
 	if err != nil {
 		return nil, err
 	}
+	return userOrders, nil
+}
+
+// GetAllUserOrderWait implements order.OrderServiceInterface.
+func (o *orderService) GetAllUserOrderWait(adminIdLogin int) ([]order.UserOrder, error) {
+	adminCheck, err := o.adminService.GetById(adminIdLogin)
+	if err != nil || adminCheck == nil {
+		return nil, errors.New("anda bukan admin")
+	}
+
+	userOrders, err := o.orderData.SelectAllUserOrderWait()
+	if err != nil {
+		return nil, err
+	}
+
 	return userOrders, nil
 }
