@@ -20,9 +20,9 @@ type OrderDetailRequest struct {
 	WeightItem            float64    `json:"weight_item"`
 	DeliveryBatch         string     `json:"delivery_path"`
 	TrackingNumberjastip  string     `json:"tracking_number_jastip"`
-	PackageWrappedPhoto   string     `json:"package_wrapped_photo"`
-	PackageReceivedPhoto  string     `json:"package_received_photo"`
-	EstimatedDeliveryTime *time.Time `json:"estimated_delivery"`
+	// PackageWrappedPhoto   string     `json:"package_wrapped_photo"`
+	// PackageReceivedPhoto  string     `json:"package_received_photo"`
+	// EstimatedDeliveryTime *time.Time `json:"estimated_delivery"`
 }
 
 type UpdateStatusRequest struct {
@@ -56,9 +56,9 @@ func RequestToOrderDetail(input OrderDetailRequest) order.OrderDetail {
 		WeightItem:            input.WeightItem,
 		TrackingNumberJastip:  input.TrackingNumberjastip,
 		DeliveryBatch:         input.DeliveryBatch,
-		PackageWrappedPhoto:   input.PackageWrappedPhoto,
-		PackageReceivedPhoto:  input.PackageReceivedPhoto,
-		EstimatedDeliveryTime: input.EstimatedDeliveryTime,
+		// PackageWrappedPhoto:   input.PackageWrappedPhoto,
+		// PackageReceivedPhoto:  input.PackageReceivedPhoto,
+		// EstimatedDeliveryTime: input.EstimatedDeliveryTime,
 	}
 }
 

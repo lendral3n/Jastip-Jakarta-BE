@@ -102,8 +102,8 @@ func (handler *OrderHandler) GetOrderById(c echo.Context) error {
 }
 
 func (handler *OrderHandler) CreateOrderDetail(c echo.Context) error {
-	userIdLogin := middlewares.ExtractTokenUserId(c)
-	if userIdLogin == 0 {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
 		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
 	}
 
@@ -119,7 +119,7 @@ func (handler *OrderHandler) CreateOrderDetail(c echo.Context) error {
 	}
 
 	orderCore := RequestToOrderDetail(newOrder)
-	errInsert := handler.orderService.CreateOrderDetail(userIdLogin, uint(orderId), orderCore)
+	errInsert := handler.orderService.CreateOrderDetail(adminIdLogin, uint(orderId), orderCore)
 	if errInsert != nil {
 		return c.JSON(http.StatusInternalServerError, responses.WebResponse(errInsert.Error(), nil))
 	}
@@ -149,7 +149,7 @@ func (handler *OrderHandler) SearchUserOrder(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
 	}
 
-	itemName := c.Param("item_name")
+	itemName := c.QueryParam("item_name")
 	if itemName == "" {
 		return c.JSON(http.StatusBadRequest, responses.WebResponse("Nama barang tidak boleh kosong", nil))
 	}
@@ -165,4 +165,23 @@ func (handler *OrderHandler) SearchUserOrder(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mencari orderan", userOrderResponses))
+}
+
+func (handler *OrderHandler) GetAllUserOrderWait(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	userOrders, err := handler.orderService.GetAllUserOrderWait(adminIdLogin)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	var userOrderResponses []UserOrderWaitResponse
+	for _, userOrder := range userOrders {
+		userOrderResponses = append(userOrderResponses, CoreToResponseUserOrderWait(userOrder))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mendapatkan semua orderan yang menunggu diterima", userOrderResponses))
 }

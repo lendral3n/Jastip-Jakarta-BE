@@ -30,7 +30,7 @@ func (o *orderQuery) InsertUserOrder(userIdLogin int, inputOrder order.UserOrder
 	detailOrder := OrderDetail{
 		UserOrderID: newOrder.ID,
 		Status:      "Menunggu Diterima",
-		AdminID: nil,
+		AdminID:     nil,
 	}
 
 	result = o.db.Create(&detailOrder)
@@ -44,9 +44,10 @@ func (o *orderQuery) InsertUserOrder(userIdLogin int, inputOrder order.UserOrder
 // PutUserOrder implements order.OrderDataInterface.
 func (o *orderQuery) PutUserOrder(userIdLogin int, userOrderId uint, inputOrder order.UserOrder) error {
 	putOrder := UserOrderToModel(inputOrder)
-	result := o.db.Model(&UserOrder{}).Where("id = ?", userOrderId).Updates(putOrder)
+	result := o.db.Model(&UserOrder{}).Where("id = ? AND user_id = ?", userOrderId, userIdLogin).Updates(putOrder)
 	return result.Error
 }
+
 
 // CheckOrderStatus implements order.OrderDataInterface.
 func (o *orderQuery) CheckOrderStatus(userOrderId uint) (string, error) {
@@ -93,7 +94,6 @@ func (o *orderQuery) SelectById(IdOrder uint) (*order.UserOrder, error) {
 	result := userOrderData.ModelToUserOrderWait()
 	return &result, nil
 }
-
 
 // InsertOrderDetail implements order.OrderDataInterface.
 func (o *orderQuery) InsertOrderDetail(adminIdLogin int, inputOrder order.OrderDetail) error {
@@ -147,6 +147,24 @@ func (o *orderQuery) SearchUserOrder(userIdLogin int, itemName string) ([]order.
 		Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
 		Where("user_orders.user_id = ? AND user_orders.item_name LIKE ?", userIdLogin, "%"+itemName+"%").
 		Find(&userOrders).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var responseOrders []order.UserOrder
+	for _, uo := range userOrders {
+		responseOrders = append(responseOrders, uo.ModelToUserOrderWait())
+	}
+
+	return responseOrders, nil
+}
+
+// SelectAllUserOrderWait implements order.OrderDataInterface.
+func (o *orderQuery) SelectAllUserOrderWait() ([]order.UserOrder, error) {
+	var userOrders []UserOrder
+
+	err := o.db.Preload("User").Preload("Region").Preload("OrderDetail").Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").Where("order_details.status = ?", "Menunggu Diterima").Find(&userOrders).Error
 
 	if err != nil {
 		return nil, err
