@@ -135,3 +135,43 @@ func (a *adminQuery) SelectByIdRegion(IdRegion string) (*admin.RegionCode, error
 	}
 	return &regionCode, nil
 }
+
+// InsertBatchDelivery implements admin.AdminDataInterface.
+func (u *adminQuery) InsertBatchDelivery(adminIdLogin int, input admin.DeliveryBatch) error {
+	dataGormBatch := DeliveryBatchToModel(input)
+	dataGormBatch.AdminID = uint(adminIdLogin)
+
+	tx := u.db.Create(&dataGormBatch)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return nil
+}
+
+// SelectAllBatchDelivery implements admin.AdminDataInterface.
+func (u *adminQuery) SelectAllBatchDelivery() ([]admin.DeliveryBatch, error) {
+	var batches []DeliveryBatch
+
+	err := u.db.Find(&batches).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var responseBatches []admin.DeliveryBatch
+	for _, batch := range batches {
+		responseBatches = append(responseBatches, batch.ModelToDeliveryBatch())
+	}
+	return responseBatches, nil
+}
+// SelectDeliveryBatch implements admin.AdminDataInterface.
+func (u *adminQuery) SelectDeliveryBatch(batchID string) (*admin.DeliveryBatch, error) {
+	var deliveryBatch admin.DeliveryBatch
+	err := u.db.Where("id = ?", batchID).First(&deliveryBatch).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("batch pengiriman tidak ditemukan")
+		}
+		return nil, err
+	}
+	return &deliveryBatch, nil
+}

@@ -50,6 +50,11 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	e.GET("/admin/profile", adminHandlerAPI.GetAdmin, middlewares.JWTMiddleware())
 	e.PUT("/admin/profile", adminHandlerAPI.UpdateAdmin, middlewares.JWTMiddleware())
 
+	// define routes/ endpoint BATCH
+	e.POST("/admin/batch", adminHandlerAPI.CreateDeliveryBatch, middlewares.JWTMiddleware())
+	e.GET("/batch", adminHandlerAPI.GetAllDeliveryBatch)
+	e.GET("/batch/:batch_id", adminHandlerAPI.GetDeliveryBatchById)
+
 	// define routes/ endpoint REGION
 	e.POST("/admin/region", adminHandlerAPI.CreateRegionCode, middlewares.JWTMiddleware())
 	e.GET("/region", adminHandlerAPI.GetRegionCode)
@@ -66,4 +71,5 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	// define routes/ endpoint ADMIN ORDER
 	e.POST("/admin/order", orderHandlerAPI.CreateOrderDetail, middlewares.JWTMiddleware())
 	e.GET("/admin/order", orderHandlerAPI.GetAllUserOrderWait, middlewares.JWTMiddleware())
+	e.GET("/admin/order/batch", orderHandlerAPI.GetDeliveryBatchWithRegion, middlewares.JWTMiddleware())
 }

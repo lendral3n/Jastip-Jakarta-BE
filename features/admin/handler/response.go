@@ -28,6 +28,13 @@ type AdminResponseOrder struct {
 	Name string `json:"name"`
 }
 
+type DeliveryBatchResponse struct {
+	DeliveryBatch string `json:"delivery_batch"`
+	Batch         int    `json:"batch"`
+	Year          int    `json:"year"`
+	Month         int    `json:"month"`
+}
+
 func AdminToResponse(data *admin.Admin) AdminResponse {
 	return AdminResponse{
 		ID:           data.ID,
@@ -48,5 +55,14 @@ func CoreToResponseRegionCode(data admin.RegionCode) RegionCodeResponse {
 		FullAddress: data.FullAddress,
 		PhoneNumber: data.PhoneNumber,
 		AdminID:     data.AdminID,
+	}
+}
+
+func CoreToResponseDeliveryBatch(data admin.DeliveryBatch) DeliveryBatchResponse {
+	return DeliveryBatchResponse{
+		DeliveryBatch: data.ID,
+		Batch:         data.Batch,
+		Year:          data.Year,
+		Month:         data.Month,
 	}
 }

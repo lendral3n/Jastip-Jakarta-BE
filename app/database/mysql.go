@@ -27,6 +27,7 @@ func InitDBMysql(cfg *config.AppConfig) *gorm.DB {
 		&od.OrderDetail{},
 		&ad.Admin{},
 		&ad.RegionCode{},
+		&ad.DeliveryBatch{},
 	)
 
 	return DB

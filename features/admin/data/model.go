@@ -28,6 +28,16 @@ type RegionCode struct {
 	AdminID     uint
 }
 
+type DeliveryBatch struct {
+	ID string `gorm:"type:varchar(255);primaryKey" json:"id"`
+	gorm.Model
+	Batch   int
+	Year    int
+	Month   int
+	AdminID uint
+	Admin   Admin `gorm:"foreignKey:AdminID"`
+}
+
 func AdminToModel(input admin.Admin) Admin {
 	return Admin{
 		ID:           input.ID,
@@ -75,5 +85,23 @@ func (u RegionCode) ModelToRegionCode() admin.RegionCode {
 		AdminID:     u.AdminID,
 		CreatedAt:   u.CreatedAt,
 		UpdatedAt:   u.UpdatedAt,
+	}
+}
+
+func DeliveryBatchToModel(input admin.DeliveryBatch) DeliveryBatch {
+	return DeliveryBatch{
+		ID:    input.ID,
+		Batch: input.Batch,
+		Year:  input.Year,
+		Month: input.Month,
+	}
+}
+
+func (u DeliveryBatch) ModelToDeliveryBatch() admin.DeliveryBatch {
+	return admin.DeliveryBatch{
+		ID:    u.ID,
+		Batch: u.Batch,
+		Year:  u.Year,
+		Month: u.Month,
 	}
 }

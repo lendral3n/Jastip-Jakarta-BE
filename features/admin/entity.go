@@ -21,12 +21,22 @@ type Admin struct {
 type RegionCode struct {
 	ID          string
 	Region      string
-	FullAddress  string
+	FullAddress string
 	PhoneNumber int
 	Price       int
 	AdminID     uint
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+type DeliveryBatch struct {
+	ID        string
+	Batch     int
+	Year      int
+	Month     int
+	AdminID   uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // interface untuk Data Layer
@@ -38,6 +48,9 @@ type AdminDataInterface interface {
 	InsertRegionCode(input RegionCode) error
 	SelectAllRegionCode() ([]RegionCode, error)
 	SelectByIdRegion(IdRegion string) (*RegionCode, error)
+	InsertBatchDelivery(adminIdLogin int, input DeliveryBatch) error
+	SelectAllBatchDelivery() ([]DeliveryBatch, error)
+	SelectDeliveryBatch(batchID string) (*DeliveryBatch, error)
 }
 
 // interface untuk Service Layer
@@ -50,4 +63,7 @@ type AdminServiceInterface interface {
 	CreateRegionCode(adminIdLogin int, input RegionCode) error
 	GetAllRegionCode() ([]RegionCode, error)
 	GettByIdRegion(IdRegion string) (*RegionCode, error)
+	CreateBatchDelivery(adminIdLogin int, input DeliveryBatch) error
+	GetAllBatchDelivery() ([]DeliveryBatch, error)
+	GetDeliveryBatch(batchID string) (*DeliveryBatch, error)
 }

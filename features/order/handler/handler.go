@@ -185,3 +185,19 @@ func (handler *OrderHandler) GetAllUserOrderWait(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mendapatkan semua orderan yang menunggu diterima", userOrderResponses))
 }
+
+func (handler *OrderHandler) GetDeliveryBatchWithRegion(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	deliveryBatchWithRegion, err := handler.orderService.GetDeliveryBatchWithRegion(adminIdLogin)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	groupedResult := CoreToResponseDeliveryBatches(deliveryBatchWithRegion)
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mendapatkan batch pengiriman dengan kode wilayah", groupedResult))
+}

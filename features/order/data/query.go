@@ -48,7 +48,6 @@ func (o *orderQuery) PutUserOrder(userIdLogin int, userOrderId uint, inputOrder 
 	return result.Error
 }
 
-
 // CheckOrderStatus implements order.OrderDataInterface.
 func (o *orderQuery) CheckOrderStatus(userOrderId uint) (string, error) {
 	var adminOrder OrderDetail
@@ -164,7 +163,10 @@ func (o *orderQuery) SearchUserOrder(userIdLogin int, itemName string) ([]order.
 func (o *orderQuery) SelectAllUserOrderWait() ([]order.UserOrder, error) {
 	var userOrders []UserOrder
 
-	err := o.db.Preload("User").Preload("Region").Preload("OrderDetail").Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").Where("order_details.status = ?", "Menunggu Diterima").Find(&userOrders).Error
+	err := o.db.Preload("User").Preload("Region").Preload("OrderDetail").
+	Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
+	Where("order_details.status = ?", "Menunggu Diterima").
+	Find(&userOrders).Error
 
 	if err != nil {
 		return nil, err
@@ -176,4 +178,20 @@ func (o *orderQuery) SelectAllUserOrderWait() ([]order.UserOrder, error) {
 	}
 
 	return responseOrders, nil
+}
+
+// FetchDeliveryBatchWithRegion implements order.OrderDataInterface.
+func (o *orderQuery) FetchDeliveryBatchWithRegion() ([]order.DeliveryBatchWithRegion, error) {
+	var result []order.DeliveryBatchWithRegion
+
+	err := o.db.Model(&UserOrder{}).
+		Select("order_details.delivery_batch_id, user_orders.region_code_id as region_code, region_codes.region, order_details.user_order_id").
+		Joins("JOIN order_details ON user_orders.id = order_details.user_order_id").
+		Joins("JOIN region_codes ON user_orders.region_code_id = region_codes.id").
+		Scan(&result).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

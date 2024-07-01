@@ -104,7 +104,7 @@ func (o *orderService) CreateOrderDetail(adminIdLogin int, userOrderId uint, inp
 		return errors.New("berat Tidak Boleh Nol")
 	}
 
-	if inputOrder.DeliveryBatch == "" {
+	if inputOrder.DeliveryBatchID == "" {
 		return errors.New("batch Pengiriman Tidak Boleh Kosong")
 	}
 
@@ -146,4 +146,18 @@ func (o *orderService) GetAllUserOrderWait(adminIdLogin int) ([]order.UserOrder,
 	}
 
 	return userOrders, nil
+}
+
+// GetDeliveryBatchWithRegion implements order.OrderServiceInterface.
+func (o *orderService) GetDeliveryBatchWithRegion(adminIdLogin int) ([]order.DeliveryBatchWithRegion, error) {
+	adminCheck, err := o.adminService.GetById(adminIdLogin)
+	if err != nil || adminCheck == nil {
+		return nil, errors.New("anda bukan admin")
+	}
+
+	deliveryBatchWithRegion, err := o.orderData.FetchDeliveryBatchWithRegion()
+	if err != nil {
+		return nil, err
+	}
+	return deliveryBatchWithRegion, nil
 }
