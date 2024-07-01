@@ -22,17 +22,26 @@ type UserOrder struct {
 	OrderDetails   OrderDetail
 }
 
+type DeliveryBatchWithRegion struct {
+	UserOrderID     uint
+	RegionCode      string
+	Region          string
+	DeliveryBatchID string
+	DeliveryBatch   ad.DeliveryBatch
+}
+
 type OrderDetail struct {
 	ID                    uint
 	UserOrderID           uint
 	AdminID               *uint
 	Status                string
 	WeightItem            float64
-	DeliveryBatch         string
+	DeliveryBatchID       string
 	PackageWrappedPhoto   string
 	PackageReceivedPhoto  string
 	TrackingNumberJastip  string
 	EstimatedDeliveryTime *time.Time
+	DeliveryBatch         ad.DeliveryBatch
 	Admin                 ad.Admin
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
@@ -49,6 +58,7 @@ type OrderDataInterface interface {
 	SearchUserOrder(userIdLogin int, itemName string) ([]UserOrder, error)
 	InsertOrderDetail(adminIdLogin int, inputOrder OrderDetail) error
 	SelectAllUserOrderWait() ([]UserOrder, error)
+	FetchDeliveryBatchWithRegion() ([]DeliveryBatchWithRegion, error)
 }
 
 // interface untuk Service Layer
@@ -61,4 +71,5 @@ type OrderServiceInterface interface {
 	SearchUserOrder(userIdLogin int, itemName string) ([]UserOrder, error)
 	CreateOrderDetail(adminIdLogin int, userOrderId uint, inputOrder OrderDetail) error
 	GetAllUserOrderWait(adminIdLogin int) ([]UserOrder, error)
+	GetDeliveryBatchWithRegion(adminIdLogin int) ([]DeliveryBatchWithRegion, error)
 }

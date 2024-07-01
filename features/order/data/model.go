@@ -31,10 +31,11 @@ type OrderDetail struct {
 	Admin                 ad.Admin `gorm:"foreignKey:AdminID"`
 	Status                string
 	WeightItem            float64
-	DeliveryBatch         string
 	PackageWrappedPhoto   string
 	PackageReceivedPhoto  string
 	TrackingNumberJastip  string
+	DeliveryBatchID       string
+	DeliveryBatch         ad.DeliveryBatch `gorm:"foreignKey:DeliveryBatchID"`
 	EstimatedDeliveryTime *time.Time
 }
 
@@ -76,7 +77,7 @@ func OrderDetailToModel(input order.OrderDetail) OrderDetail {
 		AdminID:               input.AdminID,
 		Status:                input.Status,
 		WeightItem:            input.WeightItem,
-		DeliveryBatch:         input.DeliveryBatch,
+		DeliveryBatchID:       input.DeliveryBatchID,
 		PackageWrappedPhoto:   input.PackageWrappedPhoto,
 		PackageReceivedPhoto:  input.PackageReceivedPhoto,
 		TrackingNumberJastip:  input.TrackingNumberJastip,
@@ -90,7 +91,7 @@ func (o OrderDetail) ModelToOrderDetail() order.OrderDetail {
 		UserOrderID:           o.UserOrderID,
 		Status:                o.Status,
 		WeightItem:            o.WeightItem,
-		DeliveryBatch:         o.DeliveryBatch,
+		DeliveryBatchID:       o.DeliveryBatchID,
 		PackageWrappedPhoto:   o.PackageWrappedPhoto,
 		PackageReceivedPhoto:  o.PackageReceivedPhoto,
 		EstimatedDeliveryTime: o.EstimatedDeliveryTime,

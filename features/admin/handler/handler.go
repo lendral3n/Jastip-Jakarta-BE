@@ -143,3 +143,50 @@ func (handler *AdminHandler) GetRegionCodeById(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mengambil kode region", regionCodeResponse))
 }
+
+func (handler *AdminHandler) CreateDeliveryBatch(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	newBatch := DeliveryBatchRequest{}
+	errBind := c.Bind(&newBatch)
+	if errBind != nil {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("error bind data, data not valid", nil))
+	}
+
+	batchCore := RequestToDeliveryBatch(newBatch)
+	errInsert := handler.adminService.CreateBatchDelivery(adminIdLogin, batchCore)
+	if errInsert != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(errInsert.Error(), nil))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Membuat Batch Baru Berhasil", nil))
+}
+
+func (handler *AdminHandler) GetAllDeliveryBatch(c echo.Context) error {
+	deliveryBatches, err := handler.adminService.GetAllBatchDelivery()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	var deliveryBatchResponse []DeliveryBatchResponse
+	for _, deliveryBatch := range deliveryBatches {
+		deliveryBatchResponse = append(deliveryBatchResponse, CoreToResponseDeliveryBatch(deliveryBatch))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mengambil semua batch pengiriman", deliveryBatchResponse))
+}
+
+func (handler *AdminHandler) GetDeliveryBatchById(c echo.Context) error {
+	batchID := c.Param("batch_id")
+
+	deliveryBatch, err := handler.adminService.GetDeliveryBatch(batchID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	deliveryBatchResponse := CoreToResponseDeliveryBatch(*deliveryBatch)
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mengambil data batch pengiriman", deliveryBatchResponse))
+}

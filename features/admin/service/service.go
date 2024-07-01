@@ -147,8 +147,40 @@ func (u *adminService) GetAllRegionCode() ([]admin.RegionCode, error) {
 // GettByIdRegion implements admin.AdminServiceInterface.
 func (u *adminService) GettByIdRegion(IdRegion string) (*admin.RegionCode, error) {
 	regionCode, err := u.adminData.SelectByIdRegion(IdRegion)
-    if err != nil {
-        return nil, err
-    }
-    return regionCode, nil
+	if err != nil {
+		return nil, err
+	}
+	return regionCode, nil
+}
+
+// CreateBatchDelivery implements admin.AdminServiceInterface.
+func (u *adminService) CreateBatchDelivery(adminIdLogin int, input admin.DeliveryBatch) error {
+	existingBatch, _ := u.adminData.SelectDeliveryBatch(input.ID)
+	if existingBatch != nil {
+		return errors.New("batch sudah ada")
+	}
+
+	err := u.adminData.InsertBatchDelivery(adminIdLogin, input)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetAllBatchDelivery implements admin.AdminServiceInterface.
+func (u *adminService) GetAllBatchDelivery() ([]admin.DeliveryBatch, error) {
+	responseBatch, err := u.adminData.SelectAllBatchDelivery()
+	if err != nil {
+		return nil, err
+	}
+	return responseBatch, nil
+}
+
+// GetDeliveryBatch implements admin.AdminServiceInterface.
+func (u *adminService) GetDeliveryBatch(batchID string) (*admin.DeliveryBatch, error) {
+	deliveryBatch, err := u.adminData.SelectDeliveryBatch(batchID)
+	if err != nil {
+		return nil, err
+	}
+	return deliveryBatch, nil
 }
