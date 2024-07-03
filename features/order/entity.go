@@ -36,9 +36,7 @@ type OrderDetail struct {
 	AdminID               *uint
 	Status                string
 	WeightItem            float64
-	DeliveryBatchID       string
-	PackageWrappedPhoto   string
-	PackageReceivedPhoto  string
+	DeliveryBatchID       *string
 	TrackingNumberJastip  string
 	EstimatedDeliveryTime *time.Time
 	DeliveryBatch         ad.DeliveryBatch
@@ -56,9 +54,11 @@ type OrderDataInterface interface {
 	SelectUserOrderProcess(userIdLogin int) ([]UserOrder, error)
 	SelectById(IdOrder uint) (*UserOrder, error)
 	SearchUserOrder(userIdLogin int, itemName string) ([]UserOrder, error)
-	InsertOrderDetail(adminIdLogin int, inputOrder OrderDetail) error
+	InsertOrderDetail(adminIdLogin int, userOrderId uint, inputOrder OrderDetail) error
 	SelectAllUserOrderWait() ([]UserOrder, error)
 	FetchDeliveryBatchWithRegion() ([]DeliveryBatchWithRegion, error)
+	SelectNameByUserOrder(code, batch string) ([]UserOrder, error)
+	SelectOrderByUserOrderNameUser(code, batch, name string) ([]UserOrder, error)
 }
 
 // interface untuk Service Layer
@@ -72,4 +72,6 @@ type OrderServiceInterface interface {
 	CreateOrderDetail(adminIdLogin int, userOrderId uint, inputOrder OrderDetail) error
 	GetAllUserOrderWait(adminIdLogin int) ([]UserOrder, error)
 	GetDeliveryBatchWithRegion(adminIdLogin int) ([]DeliveryBatchWithRegion, error)
+	GetNameByUserOrder(adminIdLogin int, code, batch string) ([]UserOrder, error)
+	GetOrderByUserOrderNameUser(adminIdLogin int, code, batch, name string) ([]UserOrder, error)
 }

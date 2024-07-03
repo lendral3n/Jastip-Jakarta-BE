@@ -104,7 +104,7 @@ func (o *orderService) CreateOrderDetail(adminIdLogin int, userOrderId uint, inp
 		return errors.New("berat Tidak Boleh Nol")
 	}
 
-	if inputOrder.DeliveryBatchID == "" {
+	if *inputOrder.DeliveryBatchID == "" {
 		return errors.New("batch Pengiriman Tidak Boleh Kosong")
 	}
 
@@ -112,7 +112,7 @@ func (o *orderService) CreateOrderDetail(adminIdLogin int, userOrderId uint, inp
 		return errors.New("no Resi JASTIP Tidak Boleh Kosong")
 	}
 
-	return o.orderData.InsertOrderDetail(adminIdLogin, inputOrder)
+	return o.orderData.InsertOrderDetail(adminIdLogin, userOrderId, inputOrder)
 }
 
 // GetUserOrderProcess implements order.OrderServiceInterface.
@@ -160,4 +160,32 @@ func (o *orderService) GetDeliveryBatchWithRegion(adminIdLogin int) ([]order.Del
 		return nil, err
 	}
 	return deliveryBatchWithRegion, nil
+}
+
+// GetNameByUserOrder implements order.OrderServiceInterface.
+func (o *orderService) GetNameByUserOrder(adminIdLogin int, code, batch string) ([]order.UserOrder, error) {
+	adminCheck, err := o.adminService.GetById(adminIdLogin)
+	if err != nil || adminCheck == nil {
+		return nil, errors.New("anda bukan admin")
+	}
+
+	userOrders, err := o.orderData.SelectNameByUserOrder(code, batch)
+	if err != nil {
+		return nil, err
+	}
+	return userOrders, nil
+}
+
+// GetOrderByUserOrderNameUser implements order.OrderServiceInterface.
+func (o *orderService) GetOrderByUserOrderNameUser(adminIdLogin int, code string, batch string, name string) ([]order.UserOrder, error) {
+	adminCheck, err := o.adminService.GetById(adminIdLogin)
+	if err != nil || adminCheck == nil {
+		return nil, errors.New("anda bukan admin")
+	}
+
+	userOrders, err := o.orderData.SelectOrderByUserOrderNameUser(code, batch, name)
+	if err != nil {
+		return nil, err
+	}
+	return userOrders, nil
 }

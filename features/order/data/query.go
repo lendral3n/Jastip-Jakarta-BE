@@ -62,9 +62,9 @@ func (o *orderQuery) CheckOrderStatus(userOrderId uint) (string, error) {
 func (o *orderQuery) SelectUserOrderWait(userIdLogin int) ([]order.UserOrder, error) {
 	var userOrders []UserOrder
 
-	err := o.db.Preload("User").Preload("OrderDetail").Preload("Region").
-		Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
-		Where("user_orders.user_id = ? AND order_details.status = ?", userIdLogin, "Menunggu Diterima").
+	err := o.db.Preload("User").Preload("Region").Preload("OrderDetail").
+		Joins("JOIN order_details ON order_details.user_order_id = user_orders.id AND order_details.status = ?", "Menunggu Diterima").
+		Where("user_orders.user_id = ?", userIdLogin).
 		Find(&userOrders).Error
 
 	if err != nil {
@@ -73,7 +73,9 @@ func (o *orderQuery) SelectUserOrderWait(userIdLogin int) ([]order.UserOrder, er
 
 	var responseOrders []order.UserOrder
 	for _, uo := range userOrders {
-		responseOrders = append(responseOrders, uo.ModelToUserOrderWait())
+		if order := uo.ModelToUserOrderWaits(); order != nil {
+			responseOrders = append(responseOrders, *order)
+		}
 	}
 
 	return responseOrders, nil
@@ -94,22 +96,33 @@ func (o *orderQuery) SelectById(IdOrder uint) (*order.UserOrder, error) {
 	return &result, nil
 }
 
-// InsertOrderDetail implements order.OrderDataInterface.
-func (o *orderQuery) InsertOrderDetail(adminIdLogin int, inputOrder order.OrderDetail) error {
+func (o *orderQuery) InsertOrderDetail(adminIdLogin int, userOrderId uint, inputOrder order.OrderDetail) error {
+	// Cari data UserOrder berdasarkan userOrderId
+	var userOrder UserOrder
+	if err := o.db.First(&userOrder, userOrderId).Error; err != nil {
+		return err
+	}
+
+	// Konversi OrderDetail ke model yang sesuai dengan struktur database
 	newOrder := OrderDetailToModel(inputOrder)
+
+	// Set AdminID dari input adminIdLogin
 	adminID := uint(adminIdLogin)
 	newOrder.AdminID = &adminID
 
+	// Assign UserOrderID dari userOrder yang sudah ditemukan
+	newOrder.UserOrderID = userOrder.ID
+
+	// Lakukan operasi Create pada database
 	result := o.db.Create(&newOrder)
 	if result.Error != nil {
 		return result.Error
 	}
 
-	updateStatus := OrderDetail{
-		Status: inputOrder.Status,
-	}
+	// Lakukan operasi Update status
+	updateStatus := OrderDetailStatusToModel(inputOrder)
 
-	result = o.db.Updates(&updateStatus)
+	result = o.db.Model(&newOrder).Updates(&updateStatus)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -124,6 +137,7 @@ func (o *orderQuery) SelectUserOrderProcess(userIdLogin int) ([]order.UserOrder,
 	err := o.db.Preload("User").Preload("OrderDetail").Preload("Region").
 		Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
 		Where("user_orders.user_id = ?", userIdLogin).
+		Where("order_details.status <> ?", "Menunggu Diterima").
 		Find(&userOrders).Error
 
 	if err != nil {
@@ -164,9 +178,9 @@ func (o *orderQuery) SelectAllUserOrderWait() ([]order.UserOrder, error) {
 	var userOrders []UserOrder
 
 	err := o.db.Preload("User").Preload("Region").Preload("OrderDetail").
-	Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
-	Where("order_details.status = ?", "Menunggu Diterima").
-	Find(&userOrders).Error
+		Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
+		Where("order_details.status = ?", "Menunggu Diterima").
+		Find(&userOrders).Error
 
 	if err != nil {
 		return nil, err
@@ -194,4 +208,52 @@ func (o *orderQuery) FetchDeliveryBatchWithRegion() ([]order.DeliveryBatchWithRe
 	}
 
 	return result, nil
+}
+
+// SelectNameByUserOrder implements order.OrderDataInterface.
+func (o *orderQuery) SelectNameByUserOrder(code string, batch string) ([]order.UserOrder, error) {
+	var userOrders []UserOrder
+
+	err := o.db.Preload("User").
+		Preload("Region").
+		Preload("OrderDetail").
+		Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
+		Where("user_orders.region_code_id = ? AND order_details.delivery_batch_id = ?", code, batch).
+		Find(&userOrders).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var responseOrders []order.UserOrder
+	for _, uo := range userOrders {
+		responseOrders = append(responseOrders, uo.ModelToUserOrderWait())
+	}
+
+	return responseOrders, nil
+}
+
+// SelectOrderByUserOrderNameUser implements order.OrderDataInterface.
+func (o *orderQuery) SelectOrderByUserOrderNameUser(code string, batch string, name string) ([]order.UserOrder, error) {
+	var userOrders []UserOrder
+
+	err := o.db.Preload("User").
+		Preload("Region").
+		Preload("OrderDetail").
+		Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
+		Joins("JOIN users ON users.id = user_orders.user_id").
+		Where("user_orders.region_code_id = ? AND order_details.delivery_batch_id = ? AND users.name = ?", code, batch, name).
+		Where("order_details.status <> ?", "Menunggu Diterima").
+		Find(&userOrders).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var responseOrders []order.UserOrder
+	for _, uo := range userOrders {
+		responseOrders = append(responseOrders, uo.ModelToUserOrderWait())
+	}
+
+	return responseOrders, nil
 }

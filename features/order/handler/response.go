@@ -17,14 +17,28 @@ type UserOrderWaitResponse struct {
 }
 
 type GroupedOrderResponse struct {
-	DeliveryBatch string                     `json:"delivery_batch,omitempty"`
-	Code          string                     `json:"code"`
-	Region        string                     `json:"region"`
-	Estimasi      string                     `json:"estimasi"`
-	TotalOrder    int                        `json:"total_order"`
-	TotalWeight   int                        `json:"total_weight"`
-	TotalPrice    int                        `json:"total_price"`
-	Orders        []UserOrderProcessResponse `json:"orders"`
+	DeliveryBatch        string `json:"delivery_batch,omitempty"`
+	Code                 string `json:"code"`
+	Region               string `json:"region"`
+	Estimasi             string `json:"estimasi"`
+	TotalOrder           int    `json:"total_order"`
+	TotalWeight          int    `json:"total_weight"`
+	TotalPrice           int    `json:"total_price"`
+	PackageWrappedPhoto  string `json:"package_wrapped_photo"`
+	PackageReceivedPhoto string `json:"package_received_photo"`
+	Orders               []UserOrderProcessResponse `json:"orders"`
+}
+
+type GroupedAdminOrderResponse struct {
+	DeliveryBatch  string        `json:"delivery_batch"`
+	Code           string        `json:"code"`
+	Region         string        `json:"region"`
+	Estimasi       string        `json:"estimasi"`
+	TotalOrder     int           `json:"total_order"`
+	TotalWeight    int           `json:"total_weight"`
+	TotalPrice     int           `json:"total_price"`
+	CustomerJastip []Customer    `json:"customer_jastip"`
+	Orders         []UserOrderProcessResponse `json:"orders"`
 }
 
 type UserOrderProcessResponse struct {
@@ -35,7 +49,7 @@ type UserOrderProcessResponse struct {
 	TrackingNumberJastip string `json:"tracking_number_jastip"`
 	TrackingNumber       string `json:"tracking_number"`
 	OnlineStore          string `json:"online_store"`
-	WeightItem           int
+	WeightItem           int    `json:"weight_item"`
 }
 
 type OrderResponseById struct {
@@ -61,6 +75,18 @@ type DeliveryBatchWithRegionResponse struct {
 type RegionCodeResponse struct {
 	Code   string `json:"code"`
 	Region string `json:"region"`
+}
+
+type GetCustomerResponse struct {
+	DeliveryBatch  string     `json:"delivery_batch"`
+	Code           string     `json:"code"`
+	Region         string     `json:"region"`
+	Estimasi       string     `json:"estimasi"`
+	CustomerJastip []Customer `json:"customer_jastip"`
+}
+
+type Customer struct {
+	Name string `json:"name"`
 }
 
 func CoreToResponseUserOrderById(data order.UserOrder) OrderResponseById {
@@ -91,71 +117,6 @@ func CoreToResponseUserOrderWait(data order.UserOrder) UserOrderWaitResponse {
 		Name:           data.User.Name,
 		Status:         data.OrderDetails.Status,
 	}
-}
-
-func CoreToResponseUserOrderProcess(data []order.UserOrder) []GroupedOrderResponse {
-	groupedOrders := make(map[string]map[string][]UserOrderProcessResponse)
-
-	// Mengelompokkan pesanan berdasarkan delivery batch dan region code
-	for _, order := range data {
-		regionCode := order.Region.ID // Menggunakan ID region sebagai region code
-
-		if groupedOrders[order.OrderDetails.DeliveryBatchID] == nil {
-			groupedOrders[order.OrderDetails.DeliveryBatchID] = make(map[string][]UserOrderProcessResponse)
-		}
-
-		if groupedOrders[order.OrderDetails.DeliveryBatchID][regionCode] == nil {
-			groupedOrders[order.OrderDetails.DeliveryBatchID][regionCode] = make([]UserOrderProcessResponse, 0)
-		}
-
-		// Menambahkan pesanan ke dalam grup berdasarkan region code
-		groupedOrders[order.OrderDetails.DeliveryBatchID][regionCode] = append(
-			groupedOrders[order.OrderDetails.DeliveryBatchID][regionCode],
-			UserOrderProcessResponse{
-				ID:                   order.ID,
-				Name:                 order.User.Name,
-				ItemName:             order.ItemName,
-				Status:               order.OrderDetails.Status,
-				TrackingNumberJastip: order.OrderDetails.TrackingNumberJastip,
-				TrackingNumber:       order.TrackingNumber,
-				OnlineStore:          order.OnlineStore,
-				WeightItem:           int(order.OrderDetails.WeightItem),
-			},
-		)
-	}
-
-	// Mengonversi map ke slice dari GroupedOrderResponse
-	var response []GroupedOrderResponse
-	for deliveryBatch, regions := range groupedOrders {
-		for regionCode, orders := range regions {
-			estimasi := ""
-			if len(data) > 0 && data[0].OrderDetails.EstimatedDeliveryTime != nil {
-				estimasi = time.FormatDateToIndonesian(*data[0].OrderDetails.EstimatedDeliveryTime)
-			}
-			totalOrder := len(orders)
-			totalWeight := 0
-			for _, order := range orders {
-				totalWeight += order.WeightItem
-			}
-			// TODO: Menghitung totalPrice berdasarkan region code, perlu akses ke data harga per region
-
-			// Ambil Region dari RegionCode terkait
-			region := data[0].Region.Region
-
-			response = append(response, GroupedOrderResponse{
-				DeliveryBatch: deliveryBatch,
-				Code:          regionCode, // Menggunakan regionCode sebagai Code
-				Region:        region,     // Menggunakan Region dari RegionCode terkait
-				Estimasi:      estimasi,
-				TotalOrder:    totalOrder,
-				TotalWeight:   totalWeight,
-				// TotalPrice:    totalPrice,
-				Orders: orders,
-			})
-		}
-	}
-
-	return response
 }
 
 func CoreToResponseDeliveryBatches(data []order.DeliveryBatchWithRegion) []DeliveryBatchWithRegionResponse {
@@ -203,6 +164,140 @@ func CoreToResponseDeliveryBatches(data []order.DeliveryBatchWithRegion) []Deliv
 	return finalResult
 }
 
+func CoreToGetCustomerResponse(data []order.UserOrder, batch string, code string) GetCustomerResponse {
+	var customers []Customer
+	for _, userOrder := range data {
+		customers = append(customers, Customer{Name: userOrder.User.Name})
+	}
+
+	region := ""
+	if len(data) > 0 {
+		region = data[0].Region.Region
+	}
+
+	estimasi := ""
+	if len(data) > 0 && data[0].OrderDetails.EstimatedDeliveryTime != nil {
+		estimasi = time.FormatDateToIndonesian(*data[0].OrderDetails.EstimatedDeliveryTime)
+	}
+
+	return GetCustomerResponse{
+		DeliveryBatch:  batch,
+		Code:           code,
+		Region:         region,
+		Estimasi:       estimasi,
+		CustomerJastip: customers,
+	}
+}
+
 // total berat, berat item + berat item
 // total barang, item + item
 // total harga, berat item x kode wilayah
+
+func CoreToGroupedOrderResponse(data []order.UserOrder) GroupedOrderResponse {
+	var totalWeight, totalPrice int
+	var orders []UserOrderProcessResponse
+
+	if len(data) == 0 {
+		return GroupedOrderResponse{}
+	}
+
+	batch := data[0].OrderDetails.DeliveryBatchID
+	code := data[0].Region.ID
+
+	for _, userOrder := range data {
+		orders = append(orders, CoreToUserOrderProcessResponse(userOrder))
+		totalWeight += hitungTotalBerat([]order.UserOrder{userOrder})
+		totalPrice += hitungTotalHarga([]order.UserOrder{userOrder})
+	}
+
+	estimasi := ""
+	if data[0].OrderDetails.EstimatedDeliveryTime != nil {
+		estimasi = time.FormatDateToIndonesian(*data[0].OrderDetails.EstimatedDeliveryTime)
+	}
+
+	return GroupedOrderResponse{
+		DeliveryBatch: *batch,
+		Code:          code,
+		Region:        data[0].Region.Region,
+		Estimasi:      estimasi,
+		TotalOrder:    hitungTotalPesanan(data),
+		TotalWeight:   totalWeight,
+		TotalPrice:    totalPrice,
+		// PackageReceivedPhoto: ,
+		// PackageWrappedPhoto: ,
+		Orders:        orders,
+	}
+}
+
+func CoreToUserOrderProcessResponse(data order.UserOrder) UserOrderProcessResponse {
+	return UserOrderProcessResponse{
+		ID:                   data.ID,
+		Name:                 data.User.Name,
+		ItemName:             data.ItemName,
+		Status:               data.OrderDetails.Status,
+		TrackingNumberJastip: data.OrderDetails.TrackingNumberJastip,
+		TrackingNumber:       data.TrackingNumber,
+		OnlineStore:          data.OnlineStore,
+		WeightItem:           int(data.OrderDetails.WeightItem),
+	}
+}
+
+func hitungTotalPesanan(data []order.UserOrder) int {
+	return len(data)
+}
+
+func hitungTotalBerat(data []order.UserOrder) int {
+	totalBerat := 0
+	for _, pesanan := range data {
+		totalBerat += int(pesanan.OrderDetails.WeightItem)
+	}
+	return totalBerat
+}
+
+func hitungTotalHarga(data []order.UserOrder) int {
+	totalHarga := 0
+	for _, pesanan := range data {
+		totalHarga += int(pesanan.OrderDetails.WeightItem) * dapatkanHargaPerBerat(pesanan.Region.Price)
+	}
+	return totalHarga
+}
+
+func dapatkanHargaPerBerat(harga int) int {
+	return harga
+}
+
+func CoreToGroupedAdminOrderResponse(data []order.UserOrder, batch string, code string) GroupedAdminOrderResponse {
+	var totalWeight, totalPrice int
+	var orders []UserOrderProcessResponse
+	var customers []Customer
+
+	if len(data) == 0 {
+		return GroupedAdminOrderResponse{}
+	}
+
+	region := data[0].Region.Region
+
+	for _, userOrder := range data {
+		orders = append(orders, CoreToUserOrderProcessResponse(userOrder))
+		totalWeight += int(userOrder.OrderDetails.WeightItem)
+		totalPrice += int(userOrder.OrderDetails.WeightItem) * userOrder.Region.Price
+		customers = append(customers, Customer{Name: userOrder.User.Name})
+	}
+
+	estimasi := ""
+	if data[0].OrderDetails.EstimatedDeliveryTime != nil {
+		estimasi = time.FormatDateToIndonesian(*data[0].OrderDetails.EstimatedDeliveryTime)
+	}
+
+	return GroupedAdminOrderResponse{
+		DeliveryBatch:  batch,
+		Code:           code,
+		Region:         region,
+		Estimasi:       estimasi,
+		TotalOrder:     len(data),
+		TotalWeight:    totalWeight,
+		TotalPrice:     totalPrice,
+		CustomerJastip: customers,
+		Orders:         orders,
+	}
+}

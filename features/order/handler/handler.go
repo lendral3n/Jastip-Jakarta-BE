@@ -138,7 +138,7 @@ func (handler *OrderHandler) GetUserOrderProcess(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
 	}
 
-	groupedResponses := CoreToResponseUserOrderProcess(userOrders)
+	groupedResponses := CoreToGroupedOrderResponse(userOrders)
 
 	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mendapatkan orderan yang diproses", groupedResponses))
 }
@@ -200,4 +200,53 @@ func (handler *OrderHandler) GetDeliveryBatchWithRegion(c echo.Context) error {
 	groupedResult := CoreToResponseDeliveryBatches(deliveryBatchWithRegion)
 
 	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mendapatkan batch pengiriman dengan kode wilayah", groupedResult))
+}
+
+func (handler *OrderHandler) GetUserOrderNames(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	code := c.QueryParam("code")
+	batch := c.QueryParam("batch")
+	if code == "" || batch == "" {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("Code dan batch tidak boleh kosong", nil))
+	}
+
+	userOrders, err := handler.orderService.GetNameByUserOrder(adminIdLogin, code, batch)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	response := CoreToGetCustomerResponse(userOrders, batch, code)
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mendapatkan nama-nama user order", response))
+}
+
+func (handler *OrderHandler) GetOrderByNameUser(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	code := c.QueryParam("code")
+	batch := c.QueryParam("batch")
+	if code == "" || batch == "" {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("Code dan batch tidak boleh kosong", nil))
+	}
+
+	name := c.QueryParam("name")
+	if name == "" {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("Name tidak boleh kosong", nil))
+	}
+
+	userOrders, err := handler.orderService.GetOrderByUserOrderNameUser(adminIdLogin, code, batch, name)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	response := CoreToGroupedAdminOrderResponse(userOrders, batch, code)
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mendapatkan user order", response))
 }

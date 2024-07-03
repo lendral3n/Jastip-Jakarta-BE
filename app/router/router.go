@@ -69,7 +69,9 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	e.GET("/users/order/search", orderHandlerAPI.SearchUserOrder, middlewares.JWTMiddleware())
 
 	// define routes/ endpoint ADMIN ORDER
-	e.POST("/admin/order", orderHandlerAPI.CreateOrderDetail, middlewares.JWTMiddleware())
+	e.POST("/admin/order/:order_id", orderHandlerAPI.CreateOrderDetail, middlewares.JWTMiddleware())
 	e.GET("/admin/order", orderHandlerAPI.GetAllUserOrderWait, middlewares.JWTMiddleware())
 	e.GET("/admin/order/batch", orderHandlerAPI.GetDeliveryBatchWithRegion, middlewares.JWTMiddleware())
+	e.GET("/admin/order/name", orderHandlerAPI.GetUserOrderNames, middlewares.JWTMiddleware())
+	e.GET("/admin/order/name/orders", orderHandlerAPI.GetOrderByNameUser, middlewares.JWTMiddleware())
 }

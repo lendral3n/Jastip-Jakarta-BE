@@ -29,21 +29,21 @@ func (u *userQuery) Insert(input user.User) error {
 	var emailCheck User
 	emailResult := u.db.Where("email = ?", input.Email).First(&emailCheck)
 	if emailResult.RowsAffected > 0 {
-		return errors.New("Email sudah terdaftar")
+		return errors.New("email sudah terdaftar")
 	}
 
 	// Cek apakah nama sudah ada
 	var nameCheck User
 	nameResult := u.db.Where("name = ?", input.Name).First(&nameCheck)
 	if nameResult.RowsAffected > 0 {
-		return errors.New("Nama sudah terdaftar")
+		return errors.New("nama sudah terdaftar")
 	}
 
 	// Cek apakah nomor telepon sudah ada
 	var phoneCheck User
 	phoneResult := u.db.Where("phone_number = ?", input.PhoneNumber).First(&phoneCheck)
 	if phoneResult.RowsAffected > 0 {
-		return errors.New("Nomor telepon sudah terdaftar")
+		return errors.New("nomor telepon sudah terdaftar")
 	}
 
 	// Jika tidak ada yang sama, lanjutkan dengan pembuatan akun baru
@@ -66,7 +66,7 @@ func (u *userQuery) Login(phoneOrEmail, password string) (data *user.User, err e
 		err = u.db.Where("email = ?", phoneOrEmail).First(&userDataGorm).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New("Email tidak terdaftar")
+				return nil, errors.New("email tidak terdaftar")
 			}
 			return nil, err
 		}
@@ -74,12 +74,12 @@ func (u *userQuery) Login(phoneOrEmail, password string) (data *user.User, err e
 		// Cari user dengan Nomor Telepon
 		phone, convErr := strconv.Atoi(phoneOrEmail)
 		if convErr != nil {
-			return nil, errors.New("Format nomor telepon tidak valid")
+			return nil, errors.New("format nomor telepon tidak valid")
 		}
 		err = u.db.Where("phone_number = ?", phone).First(&userDataGorm).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New("Nomor telepon tidak terdaftar")
+				return nil, errors.New("nomor telepon tidak terdaftar")
 			}
 			return nil, err
 		}
@@ -102,6 +102,27 @@ func (u *userQuery) SelectById(userIdLogin int) (*user.User, error) {
 
 // Update implements user.UserDataInterface.
 func (u *userQuery) Update(userIdLogin int, input user.User, photo *multipart.FileHeader) error {
+		// Cek apakah email sudah ada
+	var emailCheck User
+	emailResult := u.db.Where("email = ?", input.Email).First(&emailCheck)
+	if emailResult.RowsAffected > 0 {
+		return errors.New("email sudah terdaftar")
+	}
+
+	// Cek apakah nama sudah ada
+	var nameCheck User
+	nameResult := u.db.Where("name = ?", input.Name).First(&nameCheck)
+	if nameResult.RowsAffected > 0 {
+		return errors.New("nama sudah terdaftar")
+	}
+
+	// Cek apakah nomor telepon sudah ada
+	var phoneCheck User
+	phoneResult := u.db.Where("phone_number = ?", input.PhoneNumber).First(&phoneCheck)
+	if phoneResult.RowsAffected > 0 {
+		return errors.New("nomor telepon sudah terdaftar")
+	}
+
 	dataGorm := UserToModel(input)
 
 	// Cek apakah ada file foto yang diupload
@@ -118,4 +139,18 @@ func (u *userQuery) Update(userIdLogin int, input user.User, photo *multipart.Fi
 		return tx.Error
 	}
 	return nil
+}
+
+// SelectByName finds a user by name
+func (u *userQuery) SelectByName(name string) (*user.User, error) {
+    var userDataGorm User
+    err := u.db.Where("name = ?", name).First(&userDataGorm).Error
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            return nil, nil
+        }
+        return nil, err
+    }
+    userData := userDataGorm.ModelToUser()
+    return &userData, nil
 }
