@@ -31,10 +31,8 @@ type OrderDetail struct {
 	Admin                 ad.Admin `gorm:"foreignKey:AdminID"`
 	Status                string
 	WeightItem            float64
-	PackageWrappedPhoto   string
-	PackageReceivedPhoto  string
 	TrackingNumberJastip  string
-	DeliveryBatchID       string
+	DeliveryBatchID       *string          `gorm:"default:null"`
 	DeliveryBatch         ad.DeliveryBatch `gorm:"foreignKey:DeliveryBatchID"`
 	EstimatedDeliveryTime *time.Time
 }
@@ -71,15 +69,30 @@ func (o UserOrder) ModelToUserOrderWait() order.UserOrder {
 	}
 }
 
+func (o UserOrder) ModelToUserOrderWaits() *order.UserOrder {
+	if o.OrderDetail.Status != "Menunggu Diterima" {
+		return nil
+	}
+	return &order.UserOrder{
+		ID:             o.ID,
+		UserID:         o.UserID,
+		ItemName:       o.ItemName,
+		TrackingNumber: o.TrackingNumber,
+		OnlineStore:    o.OnlineStore,
+		WhatsAppNumber: o.WhatsappNumber,
+		Region:         o.Region.ModelToRegionCode(),
+		User:           o.User.ModelToUser(),
+		OrderDetails:   o.OrderDetail.ModelToOrderDetail(),
+	}
+}
+
+
 func OrderDetailToModel(input order.OrderDetail) OrderDetail {
 	return OrderDetail{
-		UserOrderID:           input.UserOrderID,
 		AdminID:               input.AdminID,
 		Status:                input.Status,
 		WeightItem:            input.WeightItem,
 		DeliveryBatchID:       input.DeliveryBatchID,
-		PackageWrappedPhoto:   input.PackageWrappedPhoto,
-		PackageReceivedPhoto:  input.PackageReceivedPhoto,
 		TrackingNumberJastip:  input.TrackingNumberJastip,
 		EstimatedDeliveryTime: input.EstimatedDeliveryTime,
 	}
@@ -92,8 +105,6 @@ func (o OrderDetail) ModelToOrderDetail() order.OrderDetail {
 		Status:                o.Status,
 		WeightItem:            o.WeightItem,
 		DeliveryBatchID:       o.DeliveryBatchID,
-		PackageWrappedPhoto:   o.PackageWrappedPhoto,
-		PackageReceivedPhoto:  o.PackageReceivedPhoto,
 		EstimatedDeliveryTime: o.EstimatedDeliveryTime,
 		TrackingNumberJastip:  o.TrackingNumberJastip,
 	}
