@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"jastip-jakarta/features/order"
 	"jastip-jakarta/utils/middlewares"
 	"jastip-jakarta/utils/responses"
@@ -249,4 +250,61 @@ func (handler *OrderHandler) GetOrderByNameUser(c echo.Context) error {
 	response := CoreToGroupedAdminOrderResponse(userOrders, batch, code)
 
 	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mendapatkan user order", response))
+}
+
+func (handler *OrderHandler) UpdateEstimationForOrders(c echo.Context) error {
+    adminIdLogin := middlewares.ExtractTokenUserId(c)
+    if adminIdLogin == 0 {
+        return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+    }
+
+    code := c.QueryParam("code")
+    batch := c.QueryParam("batch")
+    if code == "" || batch == "" {
+        return c.JSON(http.StatusBadRequest, responses.WebResponse("Code dan batch tidak boleh kosong", nil))
+    }
+
+    var req UpdateEstimationRequest
+    errBind := c.Bind(&req)
+    if errBind != nil {
+        return c.JSON(http.StatusBadRequest, responses.WebResponse("Error bind data. Data order tidak valid", nil))
+    }
+
+    estimasiTime, err := ParseEstimationDate(req.Estimation)
+    if err != nil {
+        return c.JSON(http.StatusBadRequest, responses.WebResponse("Format tanggal tidak valid. Gunakan format dd/mm/yy", nil))
+    }
+
+    err = handler.orderService.UpdateEstimationForOrders(adminIdLogin, code, batch, estimasiTime)
+    if err != nil {
+        return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+    }
+
+    return c.JSON(http.StatusOK, responses.WebResponse(fmt.Sprintf("Estimasi berhasil diperbarui menjadi %s untuk semua pesanan", estimasiTime.Format("02/01/06")), nil))
+}
+
+func (handler *OrderHandler) UpdateOrderStatus(c echo.Context) error {
+    adminIdLogin := middlewares.ExtractTokenUserId(c)
+    if adminIdLogin == 0 {
+        return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+    }
+
+    userOrderIdStr := c.Param("order_id")
+    userOrderId, err := strconv.ParseUint(userOrderIdStr, 10, 64)
+    if err != nil {
+        return c.JSON(http.StatusBadRequest, responses.WebResponse("Invalid userOrderId", nil))
+    }
+
+    var req UpdateStatusRequest
+    err = c.Bind(&req)
+    if err != nil {
+        return c.JSON(http.StatusBadRequest, responses.WebResponse("error bind data. data order not valid", nil))
+    }
+
+    err = handler.orderService.UpdateOrderStatus(adminIdLogin, uint(userOrderId), req.Status)
+    if err != nil {
+        return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+    }
+
+    return c.JSON(http.StatusOK, responses.WebResponse("Status berhasil diperbarui", nil))
 }

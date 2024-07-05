@@ -14,32 +14,52 @@ type UserOrder struct {
 	ID uint `gorm:"primaryKey" json:"id"`
 	gorm.Model
 	UserID         uint
-	User           ud.User `gorm:"foreignKey:UserID"`
 	ItemName       string
 	TrackingNumber string
 	OnlineStore    string
 	WhatsappNumber int
 	RegionCodeID   string
+	User           ud.User       `gorm:"foreignKey:UserID"`
 	Region         ad.RegionCode `gorm:"foreignKey:RegionCodeID"`
 	OrderDetail    OrderDetail
+	PhotoOrders    []PhotoOrder `gorm:"foreignKey:UserOrderID"`
 }
 
 type OrderDetail struct {
 	gorm.Model
 	UserOrderID           uint
-	AdminID               *uint    `gorm:"default:null"`
-	Admin                 ad.Admin `gorm:"foreignKey:AdminID"`
+	AdminID               *uint `gorm:"default:null"`
 	Status                string
 	WeightItem            float64
 	TrackingNumberJastip  string
-	DeliveryBatchID       *string          `gorm:"default:null"`
-	DeliveryBatch         ad.DeliveryBatch `gorm:"foreignKey:DeliveryBatchID"`
+	DeliveryBatchID       *string `gorm:"default:null"`
 	EstimatedDeliveryTime *time.Time
+	Admin                 ad.Admin         `gorm:"foreignKey:AdminID"`
+	DeliveryBatch         ad.DeliveryBatch `gorm:"foreignKey:DeliveryBatchID"`
+}
+
+type PhotoOrder struct {
+	gorm.Model
+	UserOrderID     uint
+	DeliveryBatchID string
+	PhotoPacked     string
+	PhotoReceived   string
+	UserOrder       UserOrder        `gorm:"foreignKey:UserOrderID"`
+	DeliveryBatch   ad.DeliveryBatch `gorm:"foreignKey:DeliveryBatchID"`
 }
 
 func OrderDetailStatusToModel(updateStatus order.OrderDetail) OrderDetail {
 	return OrderDetail{
 		Status: updateStatus.Status,
+	}
+}
+
+func PhotoOrderToModel(input order.PhotoOrder) PhotoOrder {
+	return PhotoOrder{
+		UserOrderID:     input.UserOrderID,
+		DeliveryBatchID: input.DeliveryBatchID,
+		PhotoPacked:     input.PhotoPacked,
+		PhotoReceived:   input.PhotoReceived,
 	}
 }
 
@@ -52,6 +72,18 @@ func UserOrderToModel(input order.UserOrder) UserOrder {
 		OnlineStore:    input.OnlineStore,
 		WhatsappNumber: input.WhatsAppNumber,
 		RegionCodeID:   input.RegionCode,
+	}
+}
+
+func (o PhotoOrder) ModelToPhotoOrdert() order.PhotoOrder {
+	return order.PhotoOrder{
+		ID:              o.ID,
+		UserOrderID:     o.UserOrderID,
+		DeliveryBatchID: o.DeliveryBatchID,
+		PhotoPacked:     o.PhotoPacked,
+		PhotoReceived:   o.PhotoReceived,
+		CreatedAt:       o.CreatedAt,
+		UpdatedAt:       o.UpdatedAt,
 	}
 }
 
@@ -85,7 +117,6 @@ func (o UserOrder) ModelToUserOrderWaits() *order.UserOrder {
 		OrderDetails:   o.OrderDetail.ModelToOrderDetail(),
 	}
 }
-
 
 func OrderDetailToModel(input order.OrderDetail) OrderDetail {
 	return OrderDetail{

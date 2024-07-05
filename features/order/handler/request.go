@@ -26,6 +26,10 @@ type UpdateStatusRequest struct {
 	Status string `json:"status"`
 }
 
+type UpdateEstimationRequest struct {
+    Estimation string `json:"estimation"`
+}
+
 func RequestToUserOrder(input UserOrderRequest) order.UserOrder {
 	return order.UserOrder{
 		ID:             generateID(),
@@ -62,3 +66,18 @@ func generateID() uint {
 	randomNumber := rand.Int63n(99999-10000) + 10000
 	return uint(randomNumber)
 }
+
+func ParseEstimationDate(estimation string) (*time.Time, error) {
+    // Format tanggal dd/mm/yy
+    layout := "02/01/06"
+    t, err := time.Parse(layout, estimation)
+    if err != nil {
+        return nil, err
+    }
+    return &t, nil
+}
+
+
+// func RequestUpdateEstimasi(input UpdateEstimationRequest) (*time.Time, error) {
+//     return ParseEstimationDate(input.Estimation)
+// }

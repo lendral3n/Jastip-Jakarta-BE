@@ -4,6 +4,7 @@ import (
 	"errors"
 	"jastip-jakarta/features/admin"
 	"jastip-jakarta/features/order"
+	"time"
 )
 
 type orderService struct {
@@ -169,6 +170,16 @@ func (o *orderService) GetNameByUserOrder(adminIdLogin int, code, batch string) 
 		return nil, errors.New("anda bukan admin")
 	}
 
+	codeCheck, err := o.adminService.GettByIdRegion(code)
+	if err != nil || codeCheck == nil {
+		return nil, errors.New("code region tidak ada")
+	}
+
+	batchCheck, err := o.adminService.GetDeliveryBatch(batch)
+	if err != nil || batchCheck == nil {
+		return nil, errors.New("delivery batch tidak ada")
+	}
+
 	userOrders, err := o.orderData.SelectNameByUserOrder(code, batch)
 	if err != nil {
 		return nil, err
@@ -183,9 +194,48 @@ func (o *orderService) GetOrderByUserOrderNameUser(adminIdLogin int, code string
 		return nil, errors.New("anda bukan admin")
 	}
 
+	codeCheck, err := o.adminService.GettByIdRegion(code)
+	if err != nil || codeCheck == nil {
+		return nil, errors.New("code region tidak ada")
+	}
+
+	batchCheck, err := o.adminService.GetDeliveryBatch(batch)
+	if err != nil || batchCheck == nil {
+		return nil, errors.New("delivery batch tidak ada")
+	}
+
 	userOrders, err := o.orderData.SelectOrderByUserOrderNameUser(code, batch, name)
 	if err != nil {
 		return nil, err
 	}
 	return userOrders, nil
+}
+
+// UpdateEstimationForOrders implements order.OrderServiceInterface.
+func (o *orderService) UpdateEstimationForOrders(adminIdLogin int, code, batch string, estimation *time.Time) error {
+	adminCheck, err := o.adminService.GetById(adminIdLogin)
+	if err != nil || adminCheck == nil {
+		return errors.New("anda bukan admin")
+	}
+
+	err = o.orderData.UpdateEstimationForOrders(code, batch, estimation)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateOrderStatus implements order.OrderServiceInterface.
+func (o *orderService) UpdateOrderStatus(adminIdLogin int, userOrderId uint, status string) error {
+	adminCheck, err := o.adminService.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Perwakilan" {
+		return errors.New("anda bukan admin perwakilan")
+	}
+
+	err = o.orderData.UpdateOrderStatus(userOrderId, status)
+	if err != nil {
+		return err
+	}
+	return nil
 }

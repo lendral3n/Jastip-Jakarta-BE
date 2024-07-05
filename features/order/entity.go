@@ -20,6 +20,7 @@ type UserOrder struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	OrderDetails   OrderDetail
+	PhotoOrders    []PhotoOrder
 }
 
 type DeliveryBatchWithRegion struct {
@@ -45,6 +46,18 @@ type OrderDetail struct {
 	UpdatedAt             time.Time
 }
 
+type PhotoOrder struct {
+	ID              uint
+	UserOrderID     uint
+	UserOrder       UserOrder `gorm:"foreignKey:UserOrderID"`
+	DeliveryBatchID string
+	DeliveryBatch   ad.DeliveryBatch `gorm:"foreignKey:DeliveryBatchID"`
+	PhotoPacked     string
+	PhotoReceived   string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
 // interface untuk Data Layer
 type OrderDataInterface interface {
 	InsertUserOrder(userIdLogin int, inputOrder UserOrder) error
@@ -59,6 +72,8 @@ type OrderDataInterface interface {
 	FetchDeliveryBatchWithRegion() ([]DeliveryBatchWithRegion, error)
 	SelectNameByUserOrder(code, batch string) ([]UserOrder, error)
 	SelectOrderByUserOrderNameUser(code, batch, name string) ([]UserOrder, error)
+	UpdateEstimationForOrders(code, batch string, estimation *time.Time) error
+	UpdateOrderStatus(userOrderId uint, status string) error
 }
 
 // interface untuk Service Layer
@@ -74,4 +89,6 @@ type OrderServiceInterface interface {
 	GetDeliveryBatchWithRegion(adminIdLogin int) ([]DeliveryBatchWithRegion, error)
 	GetNameByUserOrder(adminIdLogin int, code, batch string) ([]UserOrder, error)
 	GetOrderByUserOrderNameUser(adminIdLogin int, code, batch, name string) ([]UserOrder, error)
+	UpdateEstimationForOrders(adminIdLogin int, code, batch string, estimation *time.Time) error
+	UpdateOrderStatus(adminIdLogin int, userOrderId uint, status string) error
 }
