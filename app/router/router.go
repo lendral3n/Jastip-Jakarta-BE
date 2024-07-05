@@ -74,4 +74,6 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	e.GET("/admin/order/batch", orderHandlerAPI.GetDeliveryBatchWithRegion, middlewares.JWTMiddleware())
 	e.GET("/admin/order/name", orderHandlerAPI.GetUserOrderNames, middlewares.JWTMiddleware())
 	e.GET("/admin/order/name/orders", orderHandlerAPI.GetOrderByNameUser, middlewares.JWTMiddleware())
+	e.POST("/admin/order/estimasi", orderHandlerAPI.UpdateEstimationForOrders, middlewares.JWTMiddleware())
+	e.PUT("/admin/order/status/:order_id", orderHandlerAPI.UpdateOrderStatus, middlewares.JWTMiddleware())
 }

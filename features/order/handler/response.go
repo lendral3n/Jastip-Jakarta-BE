@@ -193,41 +193,44 @@ func CoreToGetCustomerResponse(data []order.UserOrder, batch string, code string
 // total barang, item + item
 // total harga, berat item x kode wilayah
 
-func CoreToGroupedOrderResponse(data []order.UserOrder) GroupedOrderResponse {
-	var totalWeight, totalPrice int
-	var orders []UserOrderProcessResponse
-
-	if len(data) == 0 {
-		return GroupedOrderResponse{}
-	}
-
-	batch := data[0].OrderDetails.DeliveryBatchID
-	code := data[0].Region.ID
+func CoreToGroupedOrderResponse(data []order.UserOrder) []GroupedOrderResponse {
+	// Map untuk melacak grup berdasarkan kombinasi delivery batch dan kode region
+	groupedMap := make(map[string]*GroupedOrderResponse)
 
 	for _, userOrder := range data {
-		orders = append(orders, CoreToUserOrderProcessResponse(userOrder))
-		totalWeight += hitungTotalBerat([]order.UserOrder{userOrder})
-		totalPrice += hitungTotalHarga([]order.UserOrder{userOrder})
+		key := *userOrder.OrderDetails.DeliveryBatchID + "-" + userOrder.Region.ID
+
+		if _, ok := groupedMap[key]; !ok {
+			estimasi := ""
+			if userOrder.OrderDetails.EstimatedDeliveryTime != nil {
+				estimasi = time.FormatDateToIndonesian(*userOrder.OrderDetails.EstimatedDeliveryTime)
+			}
+
+			groupedMap[key] = &GroupedOrderResponse{
+				DeliveryBatch: *userOrder.OrderDetails.DeliveryBatchID,
+				Code:          userOrder.Region.ID,
+				Region:        userOrder.Region.Region,
+				Estimasi:      estimasi,
+			}
+		}
+
+		groupedMap[key].TotalOrder++
+		groupedMap[key].TotalWeight += hitungTotalBerat([]order.UserOrder{userOrder})
+		groupedMap[key].TotalPrice += hitungTotalHarga([]order.UserOrder{userOrder})
+
+		groupedMap[key].Orders = append(groupedMap[key].Orders, CoreToUserOrderProcessResponse(userOrder))
 	}
 
-	estimasi := ""
-	if data[0].OrderDetails.EstimatedDeliveryTime != nil {
-		estimasi = time.FormatDateToIndonesian(*data[0].OrderDetails.EstimatedDeliveryTime)
+	// Konversi map ke slice untuk respons JSON
+	var groupedResponses []GroupedOrderResponse
+	for _, value := range groupedMap {
+		groupedResponses = append(groupedResponses, *value)
 	}
 
-	return GroupedOrderResponse{
-		DeliveryBatch: *batch,
-		Code:          code,
-		Region:        data[0].Region.Region,
-		Estimasi:      estimasi,
-		TotalOrder:    hitungTotalPesanan(data),
-		TotalWeight:   totalWeight,
-		TotalPrice:    totalPrice,
-		// PackageReceivedPhoto: ,
-		// PackageWrappedPhoto: ,
-		Orders:        orders,
-	}
+	return groupedResponses
 }
+
+
 
 func CoreToUserOrderProcessResponse(data order.UserOrder) UserOrderProcessResponse {
 	return UserOrderProcessResponse{
@@ -242,9 +245,9 @@ func CoreToUserOrderProcessResponse(data order.UserOrder) UserOrderProcessRespon
 	}
 }
 
-func hitungTotalPesanan(data []order.UserOrder) int {
-	return len(data)
-}
+// func hitungTotalPesanan(data []order.UserOrder) int {
+// 	return len(data)
+// }
 
 func hitungTotalBerat(data []order.UserOrder) int {
 	totalBerat := 0

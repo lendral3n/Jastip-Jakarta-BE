@@ -3,6 +3,7 @@ package data
 import (
 	"jastip-jakarta/features/order"
 	"log"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -188,7 +189,9 @@ func (o *orderQuery) SelectAllUserOrderWait() ([]order.UserOrder, error) {
 
 	var responseOrders []order.UserOrder
 	for _, uo := range userOrders {
-		responseOrders = append(responseOrders, uo.ModelToUserOrderWait())
+		if order := uo.ModelToUserOrderWaits(); order != nil {
+			responseOrders = append(responseOrders, *order)
+		}
 	}
 
 	return responseOrders, nil
@@ -256,4 +259,23 @@ func (o *orderQuery) SelectOrderByUserOrderNameUser(code string, batch string, n
 	}
 
 	return responseOrders, nil
+}
+
+// UpdateEstimationForOrders implements order.OrderDataInterface.
+func (o *orderQuery) UpdateEstimationForOrders(code, batch string, estimation *time.Time) error {
+	subQuery := o.db.Model(&UserOrder{}).
+		Select("id").
+		Where("region_code_id = ?", code)
+
+	return o.db.Model(&OrderDetail{}).
+		Where("user_order_id IN (?)", subQuery).
+		Where("delivery_batch_id = ?", batch).
+		Update("estimated_delivery_time", estimation).Error
+}
+
+// UpdateOrderStatus implements order.OrderDataInterface.
+func (o *orderQuery) UpdateOrderStatus(userOrderId uint, status string) error {
+	 return o.db.Model(&OrderDetail{}).
+        Where("user_order_id = ?", userOrderId).
+        Update("status", status).Error
 }
