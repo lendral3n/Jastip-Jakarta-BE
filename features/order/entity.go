@@ -3,11 +3,11 @@ package order
 import (
 	ad "jastip-jakarta/features/admin"
 	ud "jastip-jakarta/features/user"
+	"mime/multipart"
 	"time"
 )
 
 type UserOrder struct {
-	// ID uint
 	ID             uint
 	UserID         uint
 	ItemName       string
@@ -36,7 +36,7 @@ type OrderDetail struct {
 	UserOrderID           uint
 	AdminID               *uint
 	Status                string
-	WeightItem            float64
+	WeightItem            int
 	DeliveryBatchID       *string
 	TrackingNumberJastip  string
 	EstimatedDeliveryTime *time.Time
@@ -48,14 +48,14 @@ type OrderDetail struct {
 
 type PhotoOrder struct {
 	ID              uint
-	UserOrderID     uint
-	UserOrder       UserOrder `gorm:"foreignKey:UserOrderID"`
 	DeliveryBatchID string
-	DeliveryBatch   ad.DeliveryBatch `gorm:"foreignKey:DeliveryBatchID"`
+	DeliveryBatch   ad.DeliveryBatch
 	PhotoPacked     string
 	PhotoReceived   string
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+	UserOrderIDs    []uint
+	UserOrders      []UserOrder
 }
 
 // interface untuk Data Layer
@@ -74,6 +74,10 @@ type OrderDataInterface interface {
 	SelectOrderByUserOrderNameUser(code, batch, name string) ([]UserOrder, error)
 	UpdateEstimationForOrders(code, batch string, estimation *time.Time) error
 	UpdateOrderStatus(userOrderId uint, status string) error
+	UploadFotoPacked(inputOrder PhotoOrder, photoPacked *multipart.FileHeader) error
+	UploadFotoReceived(idFoto uint, photoReceived *multipart.FileHeader) error
+	FetchOrdersByBatch(batch string) ([]UserOrder, error)
+	GenerateCSVByBatch(batch string, filePath string) error
 }
 
 // interface untuk Service Layer
@@ -91,4 +95,7 @@ type OrderServiceInterface interface {
 	GetOrderByUserOrderNameUser(adminIdLogin int, code, batch, name string) ([]UserOrder, error)
 	UpdateEstimationForOrders(adminIdLogin int, code, batch string, estimation *time.Time) error
 	UpdateOrderStatus(adminIdLogin int, userOrderId uint, status string) error
+	UploadFotoPacked(adminIdLogin int, inputOrder PhotoOrder, photoPacked *multipart.FileHeader) error
+	UploadFotoReceived(adminIdLogin int, idFoto uint, photoReceived *multipart.FileHeader) error
+	GenerateCSVByBatch(batch, filePath string) error
 }

@@ -2,6 +2,7 @@ package router
 
 import (
 	"jastip-jakarta/utils/cloudinary"
+	"jastip-jakarta/utils/csv"
 	"jastip-jakarta/utils/encrypts"
 	"jastip-jakarta/utils/middlewares"
 
@@ -24,6 +25,7 @@ import (
 func InitRouter(db *gorm.DB, e *echo.Echo) {
 	hash := encrypts.New()
 	cloudinaryUploader := cloudinary.New()
+	csvGenerator := csv.New()
 
 	userData := ud.New(db, cloudinaryUploader)
 	userService := us.New(userData, hash)
@@ -33,7 +35,7 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	adminService := as.New(adminData, hash)
 	adminHandlerAPI := ah.New(adminService)
 
-	orderData := od.New(db)
+	orderData := od.New(db, cloudinaryUploader, csvGenerator)
 	orderService := os.New(orderData, adminService)
 	orderHandlerAPI := oh.New(orderService)
 
@@ -76,4 +78,11 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	e.GET("/admin/order/name/orders", orderHandlerAPI.GetOrderByNameUser, middlewares.JWTMiddleware())
 	e.POST("/admin/order/estimasi", orderHandlerAPI.UpdateEstimationForOrders, middlewares.JWTMiddleware())
 	e.PUT("/admin/order/status/:order_id", orderHandlerAPI.UpdateOrderStatus, middlewares.JWTMiddleware())
+
+	// define routes/ endpoint ADMIN FOTO
+	e.POST("/admin/foto", orderHandlerAPI.UploadFotoPacked, middlewares.JWTMiddleware())
+	e.PUT("/admin/foto/:id_foto", orderHandlerAPI.UploadFotoReceived, middlewares.JWTMiddleware())
+
+	// define routes/ endpoint ADMIN CSV
+	e.GET("/download/csv", orderHandlerAPI.GenerateCSVByBatch)
 }

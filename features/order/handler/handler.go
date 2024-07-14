@@ -5,6 +5,7 @@ import (
 	"jastip-jakarta/features/order"
 	"jastip-jakarta/utils/middlewares"
 	"jastip-jakarta/utils/responses"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -307,4 +308,76 @@ func (handler *OrderHandler) UpdateOrderStatus(c echo.Context) error {
     }
 
     return c.JSON(http.StatusOK, responses.WebResponse("Status berhasil diperbarui", nil))
+}
+
+func (handler *OrderHandler) UploadFotoPacked(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+	
+	uploadRequest := UploadFotoRequest{}
+	log.Printf("id order = %v", uploadRequest.UserOrderIDs)
+	errBind := c.Bind(&uploadRequest)
+	if errBind != nil {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("Error bind data. Data upload tidak valid", nil))
+	}
+	
+	fileHeaderPacked, err := c.FormFile("photo_packed")
+	if err != nil && err != http.ErrMissingFile {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("error retrieving the file", nil))
+	}
+
+	photoCore := RequestToPhotoOrder(uploadRequest)
+	errUpload := handler.orderService.UploadFotoPacked(adminIdLogin, photoCore, fileHeaderPacked)
+	if errUpload != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(errUpload.Error(), nil))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mengunggah foto", nil))
+}
+
+func (handler *OrderHandler) UploadFotoReceived(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	idFoto, err := strconv.Atoi(c.Param("id_foto"))
+	if idFoto == 0 {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("id Foto query kosong", nil))
+	}
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("error parsing foto id", nil))
+	}
+	
+	fileHeaderReceived, err := c.FormFile("photo_received")
+	if err != nil && err != http.ErrMissingFile {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("error retrieving the file", nil))
+	}
+
+	errUpload := handler.orderService.UploadFotoReceived(adminIdLogin, uint(idFoto), fileHeaderReceived)
+	if errUpload != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(errUpload.Error(), nil))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mengunggah foto", nil))
+}
+
+func (handler *OrderHandler) GenerateCSVByBatch(c echo.Context) error {
+	batch := c.QueryParam("batch")
+	if batch == "" {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("Batch pengiriman tidak boleh kosong", nil))
+	}
+
+	filePath := "batch_pengiriman_" + batch + ".csv"
+	
+	err := handler.orderService.GenerateCSVByBatch(batch, filePath)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", filePath))
+	c.Response().Header().Set(echo.HeaderContentType, "text/csv")
+	return c.File(filePath)
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"jastip-jakarta/features/admin"
 	"jastip-jakarta/features/order"
+	"mime/multipart"
 	"time"
 )
 
@@ -237,5 +238,43 @@ func (o *orderService) UpdateOrderStatus(adminIdLogin int, userOrderId uint, sta
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// UploadFotoPacked implements order.OrderServiceInterface.
+func (o *orderService) UploadFotoPacked(adminIdLogin int, inputOrder order.PhotoOrder, photoPacked *multipart.FileHeader) error {
+	adminCheck, err := o.adminService.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Jakarta" {
+		return errors.New("anda bukan admin Jakarta")
+	}
+
+	err = o.orderData.UploadFotoPacked(inputOrder, photoPacked)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// UploadFotoReceived implements order.OrderServiceInterface.
+func (o *orderService) UploadFotoReceived(adminIdLogin int, idFoto uint, photoReceived *multipart.FileHeader) error {
+	adminCheck, err := o.adminService.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Perwakilan" {
+		return errors.New("anda bukan admin perwakilan")
+	}
+
+	err = o.orderData.UploadFotoReceived(idFoto, photoReceived)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GenerateCSVByBatch implements order.OrderServiceInterface.
+func (o *orderService) GenerateCSVByBatch(batch, filePath string) error {
+	err := o.orderData.GenerateCSVByBatch(batch, filePath)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

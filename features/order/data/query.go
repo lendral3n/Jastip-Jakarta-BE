@@ -1,20 +1,28 @@
 package data
 
 import (
+	"fmt"
 	"jastip-jakarta/features/order"
+	"jastip-jakarta/utils/cloudinary"
+	"jastip-jakarta/utils/csv"
 	"log"
+	"mime/multipart"
 	"time"
 
 	"gorm.io/gorm"
 )
 
 type orderQuery struct {
-	db *gorm.DB
+	db  *gorm.DB
+	cld cloudinary.CloudinaryUploaderInterface
+	csv csv.CSVGeneratorInterface
 }
 
-func New(db *gorm.DB) order.OrderDataInterface {
+func New(db *gorm.DB, cloudinaryUploader cloudinary.CloudinaryUploaderInterface, csvGenerator csv.CSVGeneratorInterface) order.OrderDataInterface {
 	return &orderQuery{
-		db: db,
+		db:  db,
+		cld: cloudinaryUploader,
+		csv: csvGenerator,
 	}
 }
 
@@ -135,7 +143,7 @@ func (o *orderQuery) InsertOrderDetail(adminIdLogin int, userOrderId uint, input
 func (o *orderQuery) SelectUserOrderProcess(userIdLogin int) ([]order.UserOrder, error) {
 	var userOrders []UserOrder
 
-	err := o.db.Preload("User").Preload("OrderDetail").Preload("Region").
+	err := o.db.Preload("User").Preload("OrderDetail").Preload("Region").Preload("PhotoOrder").
 		Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
 		Where("user_orders.user_id = ?", userIdLogin).
 		Where("order_details.status <> ?", "Menunggu Diterima").
@@ -275,7 +283,113 @@ func (o *orderQuery) UpdateEstimationForOrders(code, batch string, estimation *t
 
 // UpdateOrderStatus implements order.OrderDataInterface.
 func (o *orderQuery) UpdateOrderStatus(userOrderId uint, status string) error {
-	 return o.db.Model(&OrderDetail{}).
-        Where("user_order_id = ?", userOrderId).
-        Update("status", status).Error
+	return o.db.Model(&OrderDetail{}).
+		Where("user_order_id = ?", userOrderId).
+		Update("status", status).Error
+}
+
+// UploadFotoPacked implements order.OrderDataInterface.
+func (o *orderQuery) UploadFotoPacked(inputOrder order.PhotoOrder, photoPacked *multipart.FileHeader) error {
+	imageURL, err := o.cld.UploadImage(photoPacked)
+	if err != nil {
+		return err
+	}
+
+	dataGorm := PhotoOrderToModel(inputOrder)
+	dataGorm.PhotoPacked = imageURL
+
+	// Simpan PhotoOrder
+	if err := o.db.Create(&dataGorm).Error; err != nil {
+		return err
+	}
+
+	// Simpan hubungan dengan UserOrders
+	for _, userOrderID := range inputOrder.UserOrderIDs {
+		// Check if the relationship already exists
+		var existingRel PhotoOrderUserOrder
+		if err := o.db.Where("photo_order_id = ? AND user_order_id = ?", dataGorm.ID, userOrderID).First(&existingRel).Error; err != nil {
+			if err != gorm.ErrRecordNotFound {
+				return err
+			}
+		}
+
+		// If the relationship doesn't exist, create it
+		if existingRel.PhotoOrderID == 0 {
+			rel := PhotoOrderUserOrder{
+				PhotoOrderID: dataGorm.ID,
+				UserOrderID:  userOrderID,
+			}
+			if err := o.db.Create(&rel).Error; err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// UploadFotoReceived implements order.OrderDataInterface.
+func (o *orderQuery) UploadFotoReceived(idFoto uint, photoReceived *multipart.FileHeader) error {
+	imageURL, err := o.cld.UploadImage(photoReceived)
+	if err != nil {
+		return err
+	}
+
+	tx := o.db.Model(&PhotoOrder{}).Where("id = ?", idFoto).Update("photo_received", imageURL)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return nil
+}
+
+// FetchOrdersByBatch implements order.OrderDataInterface.
+func (o *orderQuery) FetchOrdersByBatch(batch string) ([]order.UserOrder, error) {
+	var userOrders []UserOrder
+
+	err := o.db.Preload("User").
+		Preload("Region").
+		Preload("OrderDetail").
+		Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
+		Where("order_details.delivery_batch_id = ?", batch).
+		Find(&userOrders).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var responseOrders []order.UserOrder
+	for _, uo := range userOrders {
+		responseOrders = append(responseOrders, uo.ModelToUserOrderWait())
+	}
+	return responseOrders, nil
+}
+
+// GenerateCSVByBatch implements order.OrderDataInterface.
+func (o *orderQuery) GenerateCSVByBatch(batch string, filePath string) error {
+	data, err := o.FetchOrdersByBatch(batch)
+	if err != nil {
+		return err
+	}
+
+	var csvData []csv.UserOrderCSV
+	for _, order := range data {
+		csvData = append(csvData, csv.UserOrderCSV{
+			NamaUser:            order.User.Name,
+			NomorTeleponWhatsapp: fmt.Sprintf("%d", order.WhatsAppNumber),
+			NomorResiJastip:     order.OrderDetails.TrackingNumberJastip,
+			NomorResi:           order.TrackingNumber,
+			NomorOrder:          fmt.Sprintf("%d", order.ID),
+			KodeWilayah:         fmt.Sprintf("%s - %s", order.Region.ID, order.Region.Region),
+			HargaPerKodeWilayah: fmt.Sprintf("%d", order.Region.Price),
+			Berat:               fmt.Sprintf("%d", order.OrderDetails.WeightItem),
+			NamaBarang:          order.ItemName,
+			BatchPengiriman:     batch,
+		})
+	}
+
+	err = o.csv.GenerateCSV(filePath, csvData)
+	if err != nil {
+		return err
+	}
+	return nil
 }
