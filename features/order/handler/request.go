@@ -17,9 +17,14 @@ type UserOrderRequest struct {
 
 type OrderDetailRequest struct {
 	Status               string  `json:"status"`
-	WeightItem           float64 `json:"weight_item"`
+	WeightItem           int `json:"weight_item"`
 	DeliveryBatch        string  `json:"delivery_batch"`
 	TrackingNumberjastip string  `json:"tracking_number_jastip"`
+}
+
+type UploadFotoRequest struct {
+	DeliveryBatchID string `form:"delivery_batch_id"`
+	UserOrderIDs    []uint `form:"user_order_ids"`
 }
 
 type UpdateStatusRequest struct {
@@ -27,7 +32,7 @@ type UpdateStatusRequest struct {
 }
 
 type UpdateEstimationRequest struct {
-    Estimation string `json:"estimation"`
+	Estimation string `json:"estimation"`
 }
 
 func RequestToUserOrder(input UserOrderRequest) order.UserOrder {
@@ -38,6 +43,13 @@ func RequestToUserOrder(input UserOrderRequest) order.UserOrder {
 		OnlineStore:    input.OnlineStore,
 		WhatsAppNumber: input.WhatsAppNumber,
 		RegionCode:     input.Code,
+	}
+}
+
+func RequestToPhotoOrder(input UploadFotoRequest) order.PhotoOrder {
+	return order.PhotoOrder{
+		UserOrderIDs:    input.UserOrderIDs,
+		DeliveryBatchID: input.DeliveryBatchID,
 	}
 }
 
@@ -68,15 +80,14 @@ func generateID() uint {
 }
 
 func ParseEstimationDate(estimation string) (*time.Time, error) {
-    // Format tanggal dd/mm/yy
-    layout := "02/01/06"
-    t, err := time.Parse(layout, estimation)
-    if err != nil {
-        return nil, err
-    }
-    return &t, nil
+	// Format tanggal dd/mm/yy
+	layout := "02/01/06"
+	t, err := time.Parse(layout, estimation)
+	if err != nil {
+		return nil, err
+	}
+	return &t, nil
 }
-
 
 // func RequestUpdateEstimasi(input UpdateEstimationRequest) (*time.Time, error) {
 //     return ParseEstimationDate(input.Estimation)

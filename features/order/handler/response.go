@@ -17,28 +17,30 @@ type UserOrderWaitResponse struct {
 }
 
 type GroupedOrderResponse struct {
-	DeliveryBatch        string `json:"delivery_batch,omitempty"`
-	Code                 string `json:"code"`
-	Region               string `json:"region"`
-	Estimasi             string `json:"estimasi"`
-	TotalOrder           int    `json:"total_order"`
-	TotalWeight          int    `json:"total_weight"`
-	TotalPrice           int    `json:"total_price"`
-	PackageWrappedPhoto  string `json:"package_wrapped_photo"`
-	PackageReceivedPhoto string `json:"package_received_photo"`
+	DeliveryBatch        string                     `json:"delivery_batch,omitempty"`
+	Code                 string                     `json:"code"`
+	Region               string                     `json:"region"`
+	Estimasi             string                     `json:"estimasi"`
+	TotalOrder           int                        `json:"total_order"`
+	TotalWeight          int                        `json:"total_weight"`
+	TotalPrice           int                        `json:"total_price"`
+	PackageWrappedPhoto  string                     `json:"package_wrapped_photo"`
+	PackageReceivedPhoto string                     `json:"package_received_photo"`
 	Orders               []UserOrderProcessResponse `json:"orders"`
 }
 
 type GroupedAdminOrderResponse struct {
-	DeliveryBatch  string        `json:"delivery_batch"`
-	Code           string        `json:"code"`
-	Region         string        `json:"region"`
-	Estimasi       string        `json:"estimasi"`
-	TotalOrder     int           `json:"total_order"`
-	TotalWeight    int           `json:"total_weight"`
-	TotalPrice     int           `json:"total_price"`
-	CustomerJastip []Customer    `json:"customer_jastip"`
-	Orders         []UserOrderProcessResponse `json:"orders"`
+	DeliveryBatch        string                     `json:"delivery_batch"`
+	Code                 string                     `json:"code"`
+	Region               string                     `json:"region"`
+	Estimasi             string                     `json:"estimasi"`
+	TotalOrder           int                        `json:"total_order"`
+	TotalWeight          int                        `json:"total_weight"`
+	TotalPrice           int                        `json:"total_price"`
+	PackageWrappedPhoto  string                     `json:"package_wrapped_photo"`
+	PackageReceivedPhoto string                     `json:"package_received_photo"`
+	CustomerJastip       []Customer                 `json:"customer_jastip"`
+	Orders               []UserOrderProcessResponse `json:"orders"`
 }
 
 type UserOrderProcessResponse struct {
@@ -207,10 +209,12 @@ func CoreToGroupedOrderResponse(data []order.UserOrder) []GroupedOrderResponse {
 			}
 
 			groupedMap[key] = &GroupedOrderResponse{
-				DeliveryBatch: *userOrder.OrderDetails.DeliveryBatchID,
-				Code:          userOrder.Region.ID,
-				Region:        userOrder.Region.Region,
-				Estimasi:      estimasi,
+				DeliveryBatch:        *userOrder.OrderDetails.DeliveryBatchID,
+				Code:                 userOrder.Region.ID,
+				Region:               userOrder.Region.Region,
+				Estimasi:             estimasi,
+				// PackageWrappedPhoto:  ,
+				// PackageReceivedPhoto: ,
 			}
 		}
 
@@ -229,8 +233,6 @@ func CoreToGroupedOrderResponse(data []order.UserOrder) []GroupedOrderResponse {
 
 	return groupedResponses
 }
-
-
 
 func CoreToUserOrderProcessResponse(data order.UserOrder) UserOrderProcessResponse {
 	return UserOrderProcessResponse{
@@ -293,14 +295,16 @@ func CoreToGroupedAdminOrderResponse(data []order.UserOrder, batch string, code 
 	}
 
 	return GroupedAdminOrderResponse{
-		DeliveryBatch:  batch,
-		Code:           code,
-		Region:         region,
-		Estimasi:       estimasi,
-		TotalOrder:     len(data),
-		TotalWeight:    totalWeight,
-		TotalPrice:     totalPrice,
-		CustomerJastip: customers,
-		Orders:         orders,
+		DeliveryBatch:        batch,
+		Code:                 code,
+		Region:               region,
+		Estimasi:             estimasi,
+		TotalOrder:           len(data),
+		TotalWeight:          totalWeight,
+		TotalPrice:           totalPrice,
+		CustomerJastip:       customers,
+		Orders:               orders,
+		// PackageWrappedPhoto:  ,
+		// PackageReceivedPhoto: ,
 	}
 }

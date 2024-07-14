@@ -69,37 +69,9 @@ func RequestToDeliveryBatch(input DeliveryBatchRequest) admin.DeliveryBatch {
 	}
 }
 
-// var (
-// 	batchNumberMap = make(map[string]int)
-// 	mu             sync.Mutex
-// )
-
 func generateID() uint {
 	rand.Seed(time.Now().UnixNano())
 	randomNumber := rand.Int63n(9999999999-1000000000) + 1000000000
 	return uint(randomNumber)
 }
 
-// func generateBatchID() string {
-// 	mu.Lock()
-// 	defer mu.Unlock()
-
-// 	now := time.Now()
-// 	month := now.Month()
-// 	year := now.Year()
-
-// 	monthStr := fmt.Sprintf("%02d", month)
-// 	yearStr := fmt.Sprintf("%04d", year)
-// 	key := fmt.Sprintf("%s%s", monthStr, yearStr)
-
-// 	if _, exists := batchNumberMap[key]; !exists {
-// 		batchNumberMap[key] = 1
-// 	} else {
-// 		batchNumberMap[key]++
-// 	}
-
-// 	batchID := fmt.Sprintf("%s%sB%d", monthStr, yearStr, batchNumberMap[key])
-// 	return batchID
-// }
-
-// bulan + tahun + B + angka Batch dimulai 1
