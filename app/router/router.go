@@ -51,6 +51,9 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	e.POST("/admin/new", adminHandlerAPI.RegisterAdmin, middlewares.JWTMiddleware())
 	e.GET("/admin/profile", adminHandlerAPI.GetAdmin, middlewares.JWTMiddleware())
 	e.PUT("/admin/profile", adminHandlerAPI.UpdateAdmin, middlewares.JWTMiddleware())
+	e.GET("/admin/perwakilan", adminHandlerAPI.GetAdminPerwakilan, middlewares.JWTMiddleware())
+	e.GET("/admin/jakarta", adminHandlerAPI.GetAdminJakarta, middlewares.JWTMiddleware())
+	e.GET("/admin/all", adminHandlerAPI.GetAllAdmin, middlewares.JWTMiddleware())
 
 	// define routes/ endpoint BATCH
 	e.POST("/admin/batch", adminHandlerAPI.CreateDeliveryBatch, middlewares.JWTMiddleware())
@@ -78,6 +81,7 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	e.GET("/admin/order/name/orders", orderHandlerAPI.GetOrderByNameUser, middlewares.JWTMiddleware())
 	e.POST("/admin/order/estimasi", orderHandlerAPI.UpdateEstimationForOrders, middlewares.JWTMiddleware())
 	e.PUT("/admin/order/status/:order_id", orderHandlerAPI.UpdateOrderStatus, middlewares.JWTMiddleware())
+	e.GET("/admin/order/search", orderHandlerAPI.SearchOrder, middlewares.JWTMiddleware())
 
 	// define routes/ endpoint ADMIN FOTO
 	e.POST("/admin/foto", orderHandlerAPI.UploadFotoPacked, middlewares.JWTMiddleware())

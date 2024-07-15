@@ -5,7 +5,6 @@ import (
 	"jastip-jakarta/features/order"
 	"jastip-jakarta/utils/middlewares"
 	"jastip-jakarta/utils/responses"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -140,7 +139,7 @@ func (handler *OrderHandler) GetUserOrderProcess(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
 	}
 
-	groupedResponses := CoreToGroupedOrderResponse(userOrders)
+	groupedResponses := CoreToGroupedOrderResponse(userOrders, handler.orderService.GetFoto)
 
 	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mendapatkan orderan yang diproses", groupedResponses))
 }
@@ -248,7 +247,7 @@ func (handler *OrderHandler) GetOrderByNameUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
 	}
 
-	response := CoreToGroupedAdminOrderResponse(userOrders, batch, code)
+	response := CoreToGroupedAdminOrderResponse(userOrders, batch, code, handler.orderService.GetFoto)
 
 	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mendapatkan user order", response))
 }
@@ -317,7 +316,6 @@ func (handler *OrderHandler) UploadFotoPacked(c echo.Context) error {
 	}
 	
 	uploadRequest := UploadFotoRequest{}
-	log.Printf("id order = %v", uploadRequest.UserOrderIDs)
 	errBind := c.Bind(&uploadRequest)
 	if errBind != nil {
 		return c.JSON(http.StatusBadRequest, responses.WebResponse("Error bind data. Data upload tidak valid", nil))
@@ -380,4 +378,25 @@ func (handler *OrderHandler) GenerateCSVByBatch(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", filePath))
 	c.Response().Header().Set(echo.HeaderContentType, "text/csv")
 	return c.File(filePath)
+}
+
+func (handler *OrderHandler) SearchOrder(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	searchQuery := c.QueryParam("jastip")
+
+	userOrders, err := handler.orderService.SearchUserOrder(adminIdLogin, searchQuery)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	var userOrderResponses []UserOrderWaitResponse
+	for _, userOrder := range userOrders {
+		userOrderResponses = append(userOrderResponses, CoreToResponseUserOrderWait(userOrder))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mencari orderan", userOrderResponses))
 }

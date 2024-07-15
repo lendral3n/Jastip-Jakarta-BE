@@ -219,6 +219,16 @@ func (o *orderService) UpdateEstimationForOrders(adminIdLogin int, code, batch s
 		return errors.New("anda bukan admin")
 	}
 
+	codeCheck, err := o.adminService.GettByIdRegion(code)
+	if err != nil || codeCheck == nil {
+		return errors.New("code region tidak ada")
+	}
+
+	batchCheck, err := o.adminService.GetDeliveryBatch(batch)
+	if err != nil || batchCheck == nil {
+		return errors.New("delivery batch tidak ada")
+	}
+
 	err = o.orderData.UpdateEstimationForOrders(code, batch, estimation)
 	if err != nil {
 		return err
@@ -248,6 +258,16 @@ func (o *orderService) UploadFotoPacked(adminIdLogin int, inputOrder order.Photo
 		return errors.New("anda bukan admin Jakarta")
 	}
 
+	codeCheck, err := o.adminService.GettByIdRegion(inputOrder.RegionCodeID)
+	if err != nil || codeCheck == nil {
+		return errors.New("code region tidak ada")
+	}
+
+	batchCheck, err := o.adminService.GetDeliveryBatch(inputOrder.DeliveryBatchID)
+	if err != nil || batchCheck == nil {
+		return errors.New("delivery batch tidak ada")
+	}
+
 	err = o.orderData.UploadFotoPacked(inputOrder, photoPacked)
 	if err != nil {
 		return err
@@ -271,10 +291,42 @@ func (o *orderService) UploadFotoReceived(adminIdLogin int, idFoto uint, photoRe
 
 // GenerateCSVByBatch implements order.OrderServiceInterface.
 func (o *orderService) GenerateCSVByBatch(batch, filePath string) error {
-	err := o.orderData.GenerateCSVByBatch(batch, filePath)
+	batchCheck, err := o.adminService.GetDeliveryBatch(batch)
+	if err != nil || batchCheck == nil {
+		return errors.New("batch tidak ada")
+	}
+
+	err = o.orderData.GenerateCSVByBatch(batch, filePath)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// GetFoto implements order.OrderServiceInterface.
+func (o *orderService) GetFoto(batch string, code string, userId int) (*order.PhotoOrder, error) {
+	fotoOrders, err := o.orderData.GetFoto(batch, code, userId)
+	if err != nil {
+		return nil, err
+	}
+	return fotoOrders, nil
+}
+
+// SearchOrders implements order.OrderServiceInterface.
+func (o *orderService) SearchOrders(adminIdLogin int, searchQuery string) ([]order.UserOrder, error) {
+	adminCheck, err := o.adminService.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Jakarta" {
+		return nil, errors.New("anda bukan admin jakarta")
+	}
+
+	if searchQuery == "" {
+		return nil, errors.New("anda belum mengetikan sesuatu")
+	}
+
+	orderResponse, err := o.orderData.SearchOrders(searchQuery)
+	if err != nil {
+		return nil, err
+	}
+	return orderResponse, nil
 }

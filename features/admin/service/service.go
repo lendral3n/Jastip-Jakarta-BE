@@ -184,3 +184,31 @@ func (u *adminService) GetDeliveryBatch(batchID string) (*admin.DeliveryBatch, e
 	}
 	return deliveryBatch, nil
 }
+
+// GettAdminsByRole implements admin.AdminServiceInterface.
+func (u *adminService) GettAdminsByRole(adminIdLogin int, role string) ([]admin.Admin, error) {
+	adminCheck, err := u.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Super" {
+		return nil, errors.New("anda bukan admin super")
+	}
+
+	adminRes, err := u.adminData.SelectAdminsByRole(role)
+	if err != nil {
+		return nil, err
+	}
+	return adminRes, nil
+}
+
+// GettAllAdmins implements admin.AdminServiceInterface.
+func (u *adminService) GettAllAdmins(adminIdLogin int) ([]admin.Admin, error) {
+	adminCheck, err := u.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Super" {
+		return nil, errors.New("anda bukan admin super")
+	}
+	
+	adminRes, err := u.adminData.SelectAllAdmins()
+	if err != nil {
+		return nil, err
+	}
+	return adminRes, nil
+}

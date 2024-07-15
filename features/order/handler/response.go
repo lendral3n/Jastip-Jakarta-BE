@@ -16,16 +16,20 @@ type UserOrderWaitResponse struct {
 	Region         string `json:"region"`
 }
 
+type MainResponseOrderProses struct {
+	DeliveryBatch string                 `json:"delivery_batch,omitempty"`
+	DetailOrders  []GroupedOrderResponse `json:"detail_orders"`
+}
+
 type GroupedOrderResponse struct {
-	DeliveryBatch        string                     `json:"delivery_batch,omitempty"`
-	Code                 string                     `json:"code"`
-	Region               string                     `json:"region"`
-	Estimasi             string                     `json:"estimasi"`
-	TotalOrder           int                        `json:"total_order"`
-	TotalWeight          int                        `json:"total_weight"`
-	TotalPrice           int                        `json:"total_price"`
-	PackageWrappedPhoto  string                     `json:"package_wrapped_photo"`
-	PackageReceivedPhoto string                     `json:"package_received_photo"`
+	Code                 string `json:"code"`
+	Region               string `json:"region"`
+	Estimasi             string `json:"estimasi"`
+	TotalOrder           int    `json:"total_order"`
+	TotalWeight          int    `json:"total_weight"`
+	TotalPrice           int    `json:"total_price"`
+	PackageWrappedPhoto  string `json:"package_wrapped_photo"`
+	PackageReceivedPhoto string `json:"package_received_photo"`
 	Orders               []UserOrderProcessResponse `json:"orders"`
 }
 
@@ -39,7 +43,7 @@ type GroupedAdminOrderResponse struct {
 	TotalPrice           int                        `json:"total_price"`
 	PackageWrappedPhoto  string                     `json:"package_wrapped_photo"`
 	PackageReceivedPhoto string                     `json:"package_received_photo"`
-	CustomerJastip       []Customer                 `json:"customer_jastip"`
+	CustomerJastip       Customer                   `json:"customer_jastip"`
 	Orders               []UserOrderProcessResponse `json:"orders"`
 }
 
@@ -88,6 +92,7 @@ type GetCustomerResponse struct {
 }
 
 type Customer struct {
+	ID   uint   `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -191,47 +196,70 @@ func CoreToGetCustomerResponse(data []order.UserOrder, batch string, code string
 	}
 }
 
-// total berat, berat item + berat item
-// total barang, item + item
-// total harga, berat item x kode wilayah
+func CoreToGroupedOrderResponse(data []order.UserOrder, getFoto func(string, string, int) (*order.PhotoOrder, error)) []MainResponseOrderProses {
+    // Map untuk melacak grup berdasarkan DeliveryBatch
+    batchMap := make(map[string]*MainResponseOrderProses)
 
-func CoreToGroupedOrderResponse(data []order.UserOrder) []GroupedOrderResponse {
-	// Map untuk melacak grup berdasarkan kombinasi delivery batch dan kode region
-	groupedMap := make(map[string]*GroupedOrderResponse)
+    for _, userOrder := range data {
+        batchKey := *userOrder.OrderDetails.DeliveryBatchID
 
-	for _, userOrder := range data {
-		key := *userOrder.OrderDetails.DeliveryBatchID + "-" + userOrder.Region.ID
+        if _, ok := batchMap[batchKey]; !ok {
+            batchMap[batchKey] = &MainResponseOrderProses{
+                DeliveryBatch: batchKey,
+                DetailOrders:  []GroupedOrderResponse{},
+            }
+        }
 
-		if _, ok := groupedMap[key]; !ok {
-			estimasi := ""
-			if userOrder.OrderDetails.EstimatedDeliveryTime != nil {
-				estimasi = time.FormatDateToIndonesian(*userOrder.OrderDetails.EstimatedDeliveryTime)
-			}
+        groupedOrders := &batchMap[batchKey].DetailOrders
+        key := userOrder.Region.ID
 
-			groupedMap[key] = &GroupedOrderResponse{
-				DeliveryBatch:        *userOrder.OrderDetails.DeliveryBatchID,
-				Code:                 userOrder.Region.ID,
-				Region:               userOrder.Region.Region,
-				Estimasi:             estimasi,
-				// PackageWrappedPhoto:  ,
-				// PackageReceivedPhoto: ,
-			}
-		}
+        var existingGroup *GroupedOrderResponse
+        for i, group := range *groupedOrders {
+            if group.Code == key {
+                existingGroup = &(*groupedOrders)[i]
+                break
+            }
+        }
 
-		groupedMap[key].TotalOrder++
-		groupedMap[key].TotalWeight += hitungTotalBerat([]order.UserOrder{userOrder})
-		groupedMap[key].TotalPrice += hitungTotalHarga([]order.UserOrder{userOrder})
+        if existingGroup == nil {
+            estimasi := ""
+            if userOrder.OrderDetails.EstimatedDeliveryTime != nil {
+                estimasi = time.FormatDateToIndonesian(*userOrder.OrderDetails.EstimatedDeliveryTime)
+            }
 
-		groupedMap[key].Orders = append(groupedMap[key].Orders, CoreToUserOrderProcessResponse(userOrder))
-	}
+            newGroup := GroupedOrderResponse{
+                Code:                 userOrder.Region.ID,
+                Region:               userOrder.Region.Region,
+                Estimasi:             estimasi,
+                TotalOrder:           0,
+                TotalWeight:          0,
+                TotalPrice:           0,
+                PackageWrappedPhoto:  "",
+                PackageReceivedPhoto: "",
+                Orders:               []UserOrderProcessResponse{},
+            }
+            *groupedOrders = append(*groupedOrders, newGroup)
+            existingGroup = &(*groupedOrders)[len(*groupedOrders)-1]
+        }
 
-	// Konversi map ke slice untuk respons JSON
-	var groupedResponses []GroupedOrderResponse
-	for _, value := range groupedMap {
-		groupedResponses = append(groupedResponses, *value)
-	}
+        existingGroup.TotalOrder++
+        existingGroup.TotalWeight += hitungTotalBerat([]order.UserOrder{userOrder})
+        existingGroup.TotalPrice += hitungTotalHarga([]order.UserOrder{userOrder})
+        existingGroup.Orders = append(existingGroup.Orders, CoreToUserOrderProcessResponse(userOrder))
 
-	return groupedResponses
+        photos, err := getFoto(batchKey, existingGroup.Code, int(userOrder.UserID))
+        if err == nil && photos != nil {
+            existingGroup.PackageWrappedPhoto = photos.PhotoPacked
+            existingGroup.PackageReceivedPhoto = photos.PhotoReceived
+        }
+    }
+
+    var groupedResponses []MainResponseOrderProses
+    for _, value := range batchMap {
+        groupedResponses = append(groupedResponses, *value)
+    }
+
+    return groupedResponses
 }
 
 func CoreToUserOrderProcessResponse(data order.UserOrder) UserOrderProcessResponse {
@@ -271,10 +299,10 @@ func dapatkanHargaPerBerat(harga int) int {
 	return harga
 }
 
-func CoreToGroupedAdminOrderResponse(data []order.UserOrder, batch string, code string) GroupedAdminOrderResponse {
+func CoreToGroupedAdminOrderResponse(data []order.UserOrder, batch string, code string, getFoto func(string, string, int) (*order.PhotoOrder, error)) GroupedAdminOrderResponse {
 	var totalWeight, totalPrice int
 	var orders []UserOrderProcessResponse
-	var customers []Customer
+	var customers Customer
 
 	if len(data) == 0 {
 		return GroupedAdminOrderResponse{}
@@ -286,12 +314,21 @@ func CoreToGroupedAdminOrderResponse(data []order.UserOrder, batch string, code 
 		orders = append(orders, CoreToUserOrderProcessResponse(userOrder))
 		totalWeight += int(userOrder.OrderDetails.WeightItem)
 		totalPrice += int(userOrder.OrderDetails.WeightItem) * userOrder.Region.Price
-		customers = append(customers, Customer{Name: userOrder.User.Name})
+		customers = Customer{Name: userOrder.User.Name, ID: userOrder.User.ID}
 	}
 
 	estimasi := ""
 	if data[0].OrderDetails.EstimatedDeliveryTime != nil {
 		estimasi = time.FormatDateToIndonesian(*data[0].OrderDetails.EstimatedDeliveryTime)
+	}
+
+	// Get photos for the first userOrder (assuming photos are the same for all orders in the batch)
+	photos, err := getFoto(batch, code, int(customers.ID))
+	packageWrappedPhoto := ""
+	packageReceivedPhoto := ""
+	if err == nil && photos != nil {
+		packageWrappedPhoto = photos.PhotoPacked
+		packageReceivedPhoto = photos.PhotoReceived
 	}
 
 	return GroupedAdminOrderResponse{
@@ -304,7 +341,7 @@ func CoreToGroupedAdminOrderResponse(data []order.UserOrder, batch string, code 
 		TotalPrice:           totalPrice,
 		CustomerJastip:       customers,
 		Orders:               orders,
-		// PackageWrappedPhoto:  ,
-		// PackageReceivedPhoto: ,
+		PackageWrappedPhoto:  packageWrappedPhoto,
+		PackageReceivedPhoto: packageReceivedPhoto,
 	}
 }
