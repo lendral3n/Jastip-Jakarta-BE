@@ -16,15 +16,16 @@ type UserOrderRequest struct {
 }
 
 type OrderDetailRequest struct {
-	Status               string  `json:"status"`
-	WeightItem           int `json:"weight_item"`
-	DeliveryBatch        string  `json:"delivery_batch"`
-	TrackingNumberjastip string  `json:"tracking_number_jastip"`
+	Status               string `json:"status"`
+	WeightItem           int    `json:"weight_item"`
+	DeliveryBatch        string `json:"delivery_batch"`
+	TrackingNumberjastip string `json:"tracking_number_jastip"`
 }
 
 type UploadFotoRequest struct {
-	DeliveryBatchID string `form:"delivery_batch_id"`
-	UserOrderIDs    []uint `form:"user_order_ids"`
+	Batch  string `form:"batch"`
+	Code   string `form:"code"`
+	UserID uint   `form:"user_id"`
 }
 
 type UpdateStatusRequest struct {
@@ -48,8 +49,9 @@ func RequestToUserOrder(input UserOrderRequest) order.UserOrder {
 
 func RequestToPhotoOrder(input UploadFotoRequest) order.PhotoOrder {
 	return order.PhotoOrder{
-		UserOrderIDs:    input.UserOrderIDs,
-		DeliveryBatchID: input.DeliveryBatchID,
+		UserID:          input.UserID,
+		DeliveryBatchID: input.Batch,
+		RegionCodeID:    input.Code,
 	}
 }
 

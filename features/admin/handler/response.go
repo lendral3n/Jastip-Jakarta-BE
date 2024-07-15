@@ -35,7 +35,7 @@ type DeliveryBatchResponse struct {
 	Month         int    `json:"month"`
 }
 
-func AdminToResponse(data *admin.Admin) AdminResponse {
+func AdminToResponse(data admin.Admin) AdminResponse {
 	return AdminResponse{
 		ID:           data.ID,
 		Name:         data.Name,

@@ -22,7 +22,6 @@ type UserOrder struct {
 	User           ud.User       `gorm:"foreignKey:UserID"`
 	Region         ad.RegionCode `gorm:"foreignKey:RegionCodeID"`
 	OrderDetail    OrderDetail
-	PhotoOrders    []PhotoOrder `gorm:"many2many:photo_order_user_orders;"`
 }
 
 type OrderDetail struct {
@@ -43,13 +42,11 @@ type PhotoOrder struct {
 	DeliveryBatchID string
 	PhotoPacked     string
 	PhotoReceived   string
+	RegionCodeID    string
+	UserID          uint
+	User            ud.User          `gorm:"foreignKey:UserID"`
+	Region          ad.RegionCode    `gorm:"foreignKey:RegionCodeID"`
 	DeliveryBatch   ad.DeliveryBatch `gorm:"foreignKey:DeliveryBatchID"`
-	UserOrders      []UserOrder      `gorm:"many2many:photo_order_user_orders;"`
-}
-
-type PhotoOrderUserOrder struct {
-	PhotoOrderID uint
-	UserOrderID  uint
 }
 
 func OrderDetailStatusToModel(updateStatus order.OrderDetail) OrderDetail {
@@ -59,33 +56,23 @@ func OrderDetailStatusToModel(updateStatus order.OrderDetail) OrderDetail {
 }
 
 func PhotoOrderToModel(input order.PhotoOrder) PhotoOrder {
-	userOrders := []UserOrder{}
-	for _, userID := range input.UserOrderIDs {
-		userOrders = append(userOrders, UserOrder{ID: userID})
-	}
-
 	return PhotoOrder{
 		DeliveryBatchID: input.DeliveryBatchID,
 		PhotoPacked:     input.PhotoPacked,
 		PhotoReceived:   input.PhotoReceived,
-		UserOrders:      userOrders,
+		RegionCodeID:    input.RegionCodeID,
+		UserID:          input.UserID,
 	}
 }
 
 func (o PhotoOrder) ModelToPhotoOrder() order.PhotoOrder {
-	userOrderIDs := []uint{}
-	for _, userOrder := range o.UserOrders {
-		userOrderIDs = append(userOrderIDs, userOrder.ID)
-	}
-
 	return order.PhotoOrder{
 		ID:              o.ID,
-		UserOrderIDs:    userOrderIDs,
+		UserID:          o.UserID,
 		DeliveryBatchID: o.DeliveryBatchID,
 		PhotoPacked:     o.PhotoPacked,
 		PhotoReceived:   o.PhotoReceived,
-		CreatedAt:       o.CreatedAt,
-		UpdatedAt:       o.UpdatedAt,
+		RegionCodeID:    o.RegionCodeID,
 	}
 }
 

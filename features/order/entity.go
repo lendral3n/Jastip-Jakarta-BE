@@ -20,7 +20,7 @@ type UserOrder struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	OrderDetails   OrderDetail
-	PhotoOrders    []PhotoOrder
+	PhotoOrders    PhotoOrder
 }
 
 type DeliveryBatchWithRegion struct {
@@ -49,13 +49,13 @@ type OrderDetail struct {
 type PhotoOrder struct {
 	ID              uint
 	DeliveryBatchID string
-	DeliveryBatch   ad.DeliveryBatch
 	PhotoPacked     string
 	PhotoReceived   string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	UserOrderIDs    []uint
-	UserOrders      []UserOrder
+	RegionCodeID    string
+	UserID          uint
+	User            ud.User
+	Region          ad.RegionCode
+	DeliveryBatch   ad.DeliveryBatch
 }
 
 // interface untuk Data Layer
@@ -78,6 +78,8 @@ type OrderDataInterface interface {
 	UploadFotoReceived(idFoto uint, photoReceived *multipart.FileHeader) error
 	FetchOrdersByBatch(batch string) ([]UserOrder, error)
 	GenerateCSVByBatch(batch string, filePath string) error
+	GetFoto(batch, code string, userId int) (*PhotoOrder, error)
+	SearchOrders(searchQuery string) ([]UserOrder, error)
 }
 
 // interface untuk Service Layer
@@ -98,4 +100,6 @@ type OrderServiceInterface interface {
 	UploadFotoPacked(adminIdLogin int, inputOrder PhotoOrder, photoPacked *multipart.FileHeader) error
 	UploadFotoReceived(adminIdLogin int, idFoto uint, photoReceived *multipart.FileHeader) error
 	GenerateCSVByBatch(batch, filePath string) error
+	GetFoto(batch, code string, userId int) (*PhotoOrder, error)
+	SearchOrders(adminIdLogin int, searchQuery string) ([]UserOrder, error)
 }

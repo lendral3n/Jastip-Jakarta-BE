@@ -51,6 +51,8 @@ type AdminDataInterface interface {
 	InsertBatchDelivery(adminIdLogin int, input DeliveryBatch) error
 	SelectAllBatchDelivery() ([]DeliveryBatch, error)
 	SelectDeliveryBatch(batchID string) (*DeliveryBatch, error)
+	SelectAllAdmins() ([]Admin, error)
+	SelectAdminsByRole(role string) ([]Admin, error)
 }
 
 // interface untuk Service Layer
@@ -66,4 +68,6 @@ type AdminServiceInterface interface {
 	CreateBatchDelivery(adminIdLogin int, input DeliveryBatch) error
 	GetAllBatchDelivery() ([]DeliveryBatch, error)
 	GetDeliveryBatch(batchID string) (*DeliveryBatch, error)
+	GettAllAdmins(adminIdLogin int) ([]Admin, error)
+	GettAdminsByRole(adminIdLogin int, role string) ([]Admin, error)
 }

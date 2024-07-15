@@ -163,6 +163,7 @@ func (u *adminQuery) SelectAllBatchDelivery() ([]admin.DeliveryBatch, error) {
 	}
 	return responseBatches, nil
 }
+
 // SelectDeliveryBatch implements admin.AdminDataInterface.
 func (u *adminQuery) SelectDeliveryBatch(batchID string) (*admin.DeliveryBatch, error) {
 	var deliveryBatch admin.DeliveryBatch
@@ -174,4 +175,34 @@ func (u *adminQuery) SelectDeliveryBatch(batchID string) (*admin.DeliveryBatch, 
 		return nil, err
 	}
 	return &deliveryBatch, nil
+}
+
+// SelectAdminsByRole implements admin.AdminDataInterface.
+func (u *adminQuery) SelectAdminsByRole(role string) ([]admin.Admin, error) {
+	var admins []Admin
+    err := u.db.Where("role = ?", role).Find(&admins).Error
+    if err != nil {
+        return nil, err
+    }
+
+    var responseAdmins []admin.Admin
+    for _, admin := range admins {
+        responseAdmins = append(responseAdmins, admin.ModelToAdmin())
+    }
+    return responseAdmins, nil
+}
+
+// SelectAllAdmins implements admin.AdminDataInterface.
+func (u *adminQuery) SelectAllAdmins() ([]admin.Admin, error) {
+	var admins []Admin
+    err := u.db.Where("role <> ?", "Super").Find(&admins).Error
+    if err != nil {
+        return nil, err
+    }
+
+    var responseAdmins []admin.Admin
+    for _, admin := range admins {
+        responseAdmins = append(responseAdmins, admin.ModelToAdmin())
+    }
+    return responseAdmins, nil
 }

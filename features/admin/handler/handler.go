@@ -61,7 +61,7 @@ func (handler *AdminHandler) GetAdmin(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, responses.WebResponse("error read data. "+errSelect.Error(), nil))
 	}
 
-	var adminResult = AdminToResponse(result)
+	var adminResult = AdminToResponse(*result)
 	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil Get Data Profile", adminResult))
 }
 
@@ -189,4 +189,63 @@ func (handler *AdminHandler) GetDeliveryBatchById(c echo.Context) error {
 
 	deliveryBatchResponse := CoreToResponseDeliveryBatch(*deliveryBatch)
 	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mengambil data batch pengiriman", deliveryBatchResponse))
+}
+
+func (handler *AdminHandler) GetAdminJakarta(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	role := "Jakarta"
+	admin, err := handler.adminService.GettAdminsByRole(adminIdLogin, role)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	var adminReponse []AdminResponse
+	for _, admins := range admin {
+		adminReponse = append(adminReponse, AdminToResponse(admins))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mengambil admin jakarta", adminReponse))
+}
+
+func (handler *AdminHandler) GetAdminPerwakilan(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	role := "Perwakilan"
+	admin, err := handler.adminService.GettAdminsByRole(adminIdLogin, role)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	var adminReponse []AdminResponse
+	for _, admins := range admin {
+		adminReponse = append(adminReponse, AdminToResponse(admins))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mengambil admin perwakilan", adminReponse))
+}
+
+func (handler *AdminHandler) GetAllAdmin(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	admin, err := handler.adminService.GettAllAdmins(adminIdLogin)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	var adminReponse []AdminResponse
+	for _, admins := range admin {
+		adminReponse = append(adminReponse, AdminToResponse(admins))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mengambil admin perwakilan", adminReponse))
 }
