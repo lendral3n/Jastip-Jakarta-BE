@@ -324,9 +324,11 @@ func (o *orderService) SearchOrders(adminIdLogin int, searchQuery string) ([]ord
 		return nil, errors.New("anda belum mengetikan sesuatu")
 	}
 
+
 	orderResponse, err := o.orderData.SearchOrders(searchQuery)
 	if err != nil {
 		return nil, err
 	}
+
 	return orderResponse, nil
 }
