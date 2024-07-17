@@ -19,6 +19,7 @@ type AdminResponse struct {
 type RegionCodeResponse struct {
 	Code        string `json:"code"`
 	Region      string `json:"region"`
+	Price       int    `json:"price"`
 	FullAddress string `json:"full_address"`
 	PhoneNumber int    `json:"phone_number"`
 	AdminID     uint   `json:"admin_id"`
@@ -52,6 +53,7 @@ func CoreToResponseRegionCode(data admin.RegionCode) RegionCodeResponse {
 	return RegionCodeResponse{
 		Code:        data.ID,
 		Region:      data.Region,
+		Price:       data.Price,
 		FullAddress: data.FullAddress,
 		PhoneNumber: data.PhoneNumber,
 		AdminID:     data.AdminID,

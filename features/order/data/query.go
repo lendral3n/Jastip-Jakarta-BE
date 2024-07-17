@@ -395,23 +395,24 @@ func (o *orderQuery) GetFoto(batch string, code string, userId int) (*order.Phot
 func (o *orderQuery) SearchOrders(searchQuery string) ([]order.UserOrder, error) {
 	var userOrders []UserOrder
 
+	searchPattern := "%" + searchQuery + "%"
+
 	err := o.db.Preload("User").
 		Preload("Region").
 		Preload("OrderDetail").
 		Joins("JOIN order_details ON order_details.user_order_id = user_orders.id").
 		Joins("JOIN users ON users.id = user_orders.user_id").
 		Joins("JOIN region_codes ON region_codes.id = user_orders.region_code_id").
-		Where("(user_orders.item_name LIKE ? OR "+
+		Where("user_orders.item_name LIKE ? OR "+
 			"user_orders.tracking_number LIKE ? OR "+
 			"user_orders.online_store LIKE ? OR "+
 			"user_orders.region_code_id LIKE ? OR "+
 			"user_orders.whatsapp_number LIKE ? OR "+
 			"region_codes.region LIKE ? OR "+
 			"order_details.status LIKE ? OR "+
-			"order_details.weight_item LIKE ? OR "+
-			"order_details.tracking_number_jastip LIKE ?)",
-			searchQuery+"%", "%"+searchQuery+"%", "%"+searchQuery+"%", "%"+searchQuery+"%",
-			"%"+searchQuery+"%", "%"+searchQuery+"%", "%"+searchQuery+"%", "%"+searchQuery+"%", "%"+searchQuery+"%").
+			"CAST(order_details.weight_item AS CHAR) LIKE ? OR "+
+			"order_details.tracking_number_jastip LIKE ?",
+			searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern).
 		Find(&userOrders).Error
 
 	if err != nil {

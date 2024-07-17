@@ -388,7 +388,7 @@ func (handler *OrderHandler) SearchOrder(c echo.Context) error {
 
 	searchQuery := c.QueryParam("jastip")
 
-	userOrders, err := handler.orderService.SearchUserOrder(adminIdLogin, searchQuery)
+	userOrders, err := handler.orderService.SearchOrders(adminIdLogin, searchQuery)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
 	}
