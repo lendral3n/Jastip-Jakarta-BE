@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"jastip-jakarta/features/admin"
 	"jastip-jakarta/features/order"
 	"jastip-jakarta/utils/time"
 )
@@ -197,70 +198,75 @@ func CoreToGetCustomerResponse(data []order.UserOrder, batch string, code string
 }
 
 func CoreToGroupedOrderResponse(data []order.UserOrder, getFoto func(string, string, int) (*order.PhotoOrder, error)) []MainResponseOrderProses {
-    // Map untuk melacak grup berdasarkan DeliveryBatch
-    batchMap := make(map[string]*MainResponseOrderProses)
+	// Map untuk melacak grup berdasarkan DeliveryBatch
+	batchMap := make(map[string]*MainResponseOrderProses)
 
-    for _, userOrder := range data {
-        batchKey := *userOrder.OrderDetails.DeliveryBatchID
+	for _, userOrder := range data {
+		if userOrder.OrderDetails.DeliveryBatchID == nil || userOrder.Region == (admin.RegionCode{}) {
+			continue // Skip if any of the required fields are nil or empty
+		}
 
-        if _, ok := batchMap[batchKey]; !ok {
-            batchMap[batchKey] = &MainResponseOrderProses{
-                DeliveryBatch: batchKey,
-                DetailOrders:  []GroupedOrderResponse{},
-            }
-        }
+		batchKey := *userOrder.OrderDetails.DeliveryBatchID
 
-        groupedOrders := &batchMap[batchKey].DetailOrders
-        key := userOrder.Region.ID
+		if _, ok := batchMap[batchKey]; !ok {
+			batchMap[batchKey] = &MainResponseOrderProses{
+				DeliveryBatch: batchKey,
+				DetailOrders:  []GroupedOrderResponse{},
+			}
+		}
 
-        var existingGroup *GroupedOrderResponse
-        for i, group := range *groupedOrders {
-            if group.Code == key {
-                existingGroup = &(*groupedOrders)[i]
-                break
-            }
-        }
+		groupedOrders := &batchMap[batchKey].DetailOrders
+		key := userOrder.Region.ID
 
-        if existingGroup == nil {
-            estimasi := ""
-            if userOrder.OrderDetails.EstimatedDeliveryTime != nil {
-                estimasi = time.FormatDateToIndonesian(*userOrder.OrderDetails.EstimatedDeliveryTime)
-            }
+		var existingGroup *GroupedOrderResponse
+		for i, group := range *groupedOrders {
+			if group.Code == key {
+				existingGroup = &(*groupedOrders)[i]
+				break
+			}
+		}
 
-            newGroup := GroupedOrderResponse{
-                Code:                 userOrder.Region.ID,
-                Region:               userOrder.Region.Region,
-                Estimasi:             estimasi,
-                TotalOrder:           0,
-                TotalWeight:          0,
-                TotalPrice:           0,
-                PackageWrappedPhoto:  "",
-                PackageReceivedPhoto: "",
-                Orders:               []UserOrderProcessResponse{},
-            }
-            *groupedOrders = append(*groupedOrders, newGroup)
-            existingGroup = &(*groupedOrders)[len(*groupedOrders)-1]
-        }
+		if existingGroup == nil {
+			estimasi := ""
+			if userOrder.OrderDetails.EstimatedDeliveryTime != nil {
+				estimasi = time.FormatDateToIndonesian(*userOrder.OrderDetails.EstimatedDeliveryTime)
+			}
 
-        existingGroup.TotalOrder++
-        existingGroup.TotalWeight += hitungTotalBerat([]order.UserOrder{userOrder})
-        existingGroup.TotalPrice += hitungTotalHarga([]order.UserOrder{userOrder})
-        existingGroup.Orders = append(existingGroup.Orders, CoreToUserOrderProcessResponse(userOrder))
+			newGroup := GroupedOrderResponse{
+				Code:                 userOrder.Region.ID,
+				Region:               userOrder.Region.Region,
+				Estimasi:             estimasi,
+				TotalOrder:           0,
+				TotalWeight:          0,
+				TotalPrice:           0,
+				PackageWrappedPhoto:  "",
+				PackageReceivedPhoto: "",
+				Orders:               []UserOrderProcessResponse{},
+			}
+			*groupedOrders = append(*groupedOrders, newGroup)
+			existingGroup = &(*groupedOrders)[len(*groupedOrders)-1]
+		}
 
-        photos, err := getFoto(batchKey, existingGroup.Code, int(userOrder.UserID))
-        if err == nil && photos != nil {
-            existingGroup.PackageWrappedPhoto = photos.PhotoPacked
-            existingGroup.PackageReceivedPhoto = photos.PhotoReceived
-        }
-    }
+		existingGroup.TotalOrder++
+		existingGroup.TotalWeight += hitungTotalBerat([]order.UserOrder{userOrder})
+		existingGroup.TotalPrice += hitungTotalHarga([]order.UserOrder{userOrder})
+		existingGroup.Orders = append(existingGroup.Orders, CoreToUserOrderProcessResponse(userOrder))
 
-    var groupedResponses []MainResponseOrderProses
-    for _, value := range batchMap {
-        groupedResponses = append(groupedResponses, *value)
-    }
+		photos, err := getFoto(batchKey, existingGroup.Code, int(userOrder.UserID))
+		if err == nil && photos != nil {
+			existingGroup.PackageWrappedPhoto = photos.PhotoPacked
+			existingGroup.PackageReceivedPhoto = photos.PhotoReceived
+		}
+	}
 
-    return groupedResponses
+	var groupedResponses []MainResponseOrderProses
+	for _, value := range batchMap {
+		groupedResponses = append(groupedResponses, *value)
+	}
+
+	return groupedResponses
 }
+
 
 func CoreToUserOrderProcessResponse(data order.UserOrder) UserOrderProcessResponse {
 	return UserOrderProcessResponse{
