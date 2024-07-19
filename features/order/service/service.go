@@ -316,8 +316,8 @@ func (o *orderService) GetFoto(batch string, code string, userId int) (*order.Ph
 // SearchOrders implements order.OrderServiceInterface.
 func (o *orderService) SearchOrders(adminIdLogin int, searchQuery string) ([]order.UserOrder, error) {
 	adminCheck, err := o.adminService.GetById(adminIdLogin)
-	if err != nil || adminCheck.Role != "Jakarta" {
-		return nil, errors.New("anda bukan admin jakarta")
+	if err != nil || adminCheck == nil {
+		return nil, errors.New("anda bukan admin")
 	}
 
 	if searchQuery == "" {
