@@ -23,19 +23,6 @@ type MainResponseOrderProses struct {
 }
 
 type GroupedOrderResponse struct {
-	Code                 string `json:"code"`
-	Region               string `json:"region"`
-	Estimasi             string `json:"estimasi"`
-	TotalOrder           int    `json:"total_order"`
-	TotalWeight          int    `json:"total_weight"`
-	TotalPrice           int    `json:"total_price"`
-	PackageWrappedPhoto  string `json:"package_wrapped_photo"`
-	PackageReceivedPhoto string `json:"package_received_photo"`
-	Orders               []UserOrderProcessResponse `json:"orders"`
-}
-
-type GroupedAdminOrderResponse struct {
-	DeliveryBatch        string                     `json:"delivery_batch"`
 	Code                 string                     `json:"code"`
 	Region               string                     `json:"region"`
 	Estimasi             string                     `json:"estimasi"`
@@ -44,8 +31,26 @@ type GroupedAdminOrderResponse struct {
 	TotalPrice           int                        `json:"total_price"`
 	PackageWrappedPhoto  string                     `json:"package_wrapped_photo"`
 	PackageReceivedPhoto string                     `json:"package_received_photo"`
-	CustomerJastip       Customer                   `json:"customer_jastip"`
 	Orders               []UserOrderProcessResponse `json:"orders"`
+}
+
+type GroupedAdminOrderResponse struct {
+	DeliveryBatch  string                     `json:"delivery_batch"`
+	Code           string                     `json:"code"`
+	Region         string                     `json:"region"`
+	Estimasi       string                     `json:"estimasi"`
+	TotalOrder     int                        `json:"total_order"`
+	TotalWeight    int                        `json:"total_weight"`
+	TotalPrice     int                        `json:"total_price"`
+	Foto           FotoResponse               `json:"foto_orders"`
+	CustomerJastip Customer                   `json:"customer_jastip"`
+	Orders         []UserOrderProcessResponse `json:"orders"`
+}
+
+type FotoResponse struct {
+	ID                   int    `json:"id_foto"`
+	PackageWrappedPhoto  string `json:"package_wrapped_photo"`
+	PackageReceivedPhoto string `json:"package_received_photo"`
 }
 
 type UserOrderProcessResponse struct {
@@ -267,7 +272,6 @@ func CoreToGroupedOrderResponse(data []order.UserOrder, getFoto func(string, str
 	return groupedResponses
 }
 
-
 func CoreToUserOrderProcessResponse(data order.UserOrder) UserOrderProcessResponse {
 	return UserOrderProcessResponse{
 		ID:                   data.ID,
@@ -330,24 +334,25 @@ func CoreToGroupedAdminOrderResponse(data []order.UserOrder, batch string, code 
 
 	// Get photos for the first userOrder (assuming photos are the same for all orders in the batch)
 	photos, err := getFoto(batch, code, int(customers.ID))
-	packageWrappedPhoto := ""
-	packageReceivedPhoto := ""
+	var foto FotoResponse
 	if err == nil && photos != nil {
-		packageWrappedPhoto = photos.PhotoPacked
-		packageReceivedPhoto = photos.PhotoReceived
+		foto = FotoResponse{
+			ID:                   int(photos.ID),
+			PackageWrappedPhoto:  photos.PhotoPacked,
+			PackageReceivedPhoto: photos.PhotoReceived,
+		}
 	}
 
 	return GroupedAdminOrderResponse{
-		DeliveryBatch:        batch,
-		Code:                 code,
-		Region:               region,
-		Estimasi:             estimasi,
-		TotalOrder:           len(data),
-		TotalWeight:          totalWeight,
-		TotalPrice:           totalPrice,
-		CustomerJastip:       customers,
-		Orders:               orders,
-		PackageWrappedPhoto:  packageWrappedPhoto,
-		PackageReceivedPhoto: packageReceivedPhoto,
+		DeliveryBatch:  batch,
+		Code:           code,
+		Region:         region,
+		Estimasi:       estimasi,
+		TotalOrder:     len(data),
+		TotalWeight:    totalWeight,
+		TotalPrice:     totalPrice,
+		Foto:           foto,
+		CustomerJastip: customers,
+		Orders:         orders,
 	}
 }
