@@ -324,11 +324,45 @@ func (o *orderService) SearchOrders(adminIdLogin int, searchQuery string) ([]ord
 		return nil, errors.New("anda belum mengetikan sesuatu")
 	}
 
-
 	orderResponse, err := o.orderData.SearchOrders(searchQuery)
 	if err != nil {
 		return nil, err
 	}
 
 	return orderResponse, nil
+}
+
+// UpdateOrderByID implements order.OrderServiceInterface.
+func (o *orderService) UpdateOrderByID(adminIdLogin int, orderID uint, inputOrder order.UpdateOrderByID) error {
+	adminCheck, err := o.adminService.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Super" {
+		return errors.New("anda bukan admin super")
+	}
+
+	_, err = o.orderData.SelectById(orderID)
+	if err != nil {
+		return errors.New("order tidak ada")
+	}
+
+	err = o.orderData.UpdateOrderByID(orderID, inputOrder)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// FetchRegionStatsByBatch implements order.OrderServiceInterface.
+func (o *orderService) FetchRegionStatsByBatch(adminIdLogin int, batch string) ([]order.RegionBatchStats, error) {
+	adminCheck, err := o.adminService.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Super" {
+		return nil, errors.New("anda bukan admin super")
+	}
+
+	statsResponse, err := o.orderData.FetchRegionStatsByBatch(batch)
+	if err != nil {
+		return nil, err
+	}
+
+	return statsResponse, nil
 }

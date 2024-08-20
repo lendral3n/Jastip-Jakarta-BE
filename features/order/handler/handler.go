@@ -119,7 +119,13 @@ func (handler *OrderHandler) CreateOrderDetail(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, responses.WebResponse("error bind data. data order not valid", nil))
 	}
 
-	orderCore := RequestToOrderDetail(newOrder)
+	// Fetch UserOrder based on orderId
+	userOrder, errFetch := handler.orderService.GetById(uint(orderId))
+	if errFetch != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse("Gagal mendapatkan detail order", nil))
+	}
+
+	orderCore := RequestToOrderDetail(newOrder, *userOrder)
 	errInsert := handler.orderService.CreateOrderDetail(adminIdLogin, uint(orderId), orderCore)
 	if errInsert != nil {
 		return c.JSON(http.StatusInternalServerError, responses.WebResponse(errInsert.Error(), nil))
@@ -272,7 +278,7 @@ func (handler *OrderHandler) UpdateEstimationForOrders(c echo.Context) error {
 
     estimasiTime, err := ParseEstimationDate(req.Estimation)
     if err != nil {
-        return c.JSON(http.StatusBadRequest, responses.WebResponse("Format tanggal tidak valid. Gunakan format dd/mm/yy", nil))
+        return c.JSON(http.StatusBadRequest, responses.WebResponse("Format tanggal tidak valid. Gunakan format dd/mm/yyyy", nil))
     }
 
     err = handler.orderService.UpdateEstimationForOrders(adminIdLogin, code, batch, estimasiTime)
@@ -280,7 +286,7 @@ func (handler *OrderHandler) UpdateEstimationForOrders(c echo.Context) error {
         return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
     }
 
-    return c.JSON(http.StatusOK, responses.WebResponse(fmt.Sprintf("Estimasi berhasil diperbarui menjadi %s untuk semua pesanan", estimasiTime.Format("02/01/06")), nil))
+    return c.JSON(http.StatusOK, responses.WebResponse(fmt.Sprintf("Estimasi berhasil diperbarui menjadi %s untuk semua pesanan", estimasiTime.Format("02/01/2006")), nil))
 }
 
 func (handler *OrderHandler) UpdateOrderStatus(c echo.Context) error {
@@ -399,4 +405,54 @@ func (handler *OrderHandler) SearchOrder(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mencari orderan", userOrderResponses))
+}
+
+func (handler *OrderHandler) UpdateOrderById(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	userOrderId, errParse := strconv.ParseUint(c.Param("order_id"), 10, 32)
+	if errParse != nil {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("ID order tidak valid", nil))
+	}
+
+	updateOrder := UpdateOrderByID{}
+	errBind := c.Bind(&updateOrder)
+	if errBind != nil {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("error bind data. data order not valid", nil))
+	}
+
+	orderCore := RequestToUserOrderUpdate(updateOrder)
+	errUpdate := handler.orderService.UpdateOrderByID(adminIdLogin, uint(userOrderId), orderCore)
+	if errUpdate != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(errUpdate.Error(), nil))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Order berhasil diperbarui", nil))
+}
+
+func (handler *OrderHandler) GetOrderSStats(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	batch := c.Param("batch")
+	if batch == "" {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("batch tidak boleh kosong", nil))
+	}
+
+	orderStats, err := handler.orderService.FetchRegionStatsByBatch(adminIdLogin, batch)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	var orderStatsResponses []RegionBatchStats
+	for _, orderStat := range orderStats {
+		orderStatsResponses = append(orderStatsResponses, CoreToResponseRegionBatchStats(orderStat))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mendapatkan statistik", orderStatsResponses))
 }

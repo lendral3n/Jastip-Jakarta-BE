@@ -359,7 +359,7 @@ func (o *orderQuery) GenerateCSVByBatch(batch string, filePath string) error {
 			NomorOrder:           fmt.Sprintf("%d", order.ID),
 			KodeWilayah:          fmt.Sprintf("%s - %s", order.Region.ID, order.Region.Region),
 			HargaPerKodeWilayah:  fmt.Sprintf("%d", order.Region.Price),
-			Berat:                fmt.Sprintf("%d", order.OrderDetails.WeightItem),
+			Berat:                fmt.Sprintf("%2f", float64(order.OrderDetails.WeightItem)),
 			NamaBarang:           order.ItemName,
 			BatchPengiriman:      batch,
 		})
@@ -425,4 +425,59 @@ func (o *orderQuery) SearchOrders(searchQuery string) ([]order.UserOrder, error)
 	}
 
 	return responseOrders, nil
+}
+
+// UpdateOrderByID updates an order's details based on the given order ID.
+func (o *orderQuery) UpdateOrderByID(orderID uint, inputOrder order.UpdateOrderByID) error {
+	userOrder, orderDetail := UserOrderUpdateToModel(inputOrder)
+
+	// Update UserOrder
+	result := o.db.Model(&UserOrder{}).Where("id = ?", orderID).Updates(userOrder)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Update OrderDetail
+	result = o.db.Model(&OrderDetail{}).Where("user_order_id = ?", orderID).Updates(orderDetail)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+}
+
+// FetchRegionStatsByBatch implements order.OrderDataInterface.
+func (o *orderQuery) FetchRegionStatsByBatch(batch string) ([]order.RegionBatchStats, error) {
+	var results []order.RegionBatchStats
+
+	err := o.db.Table("user_orders").
+		Select(`
+			user_orders.region_code_id AS region_code,
+			COALESCE(region_codes.price, 0) AS price_per_code,
+			SUM(order_details.weight_item) AS total_weight,
+			COUNT(DISTINCT user_orders.user_id) AS total_users,
+			COUNT(user_orders.id) AS total_orders,
+			(COALESCE(region_codes.price, 0) * COUNT(user_orders.id)) AS total_price`).
+		Joins(`JOIN order_details ON user_orders.id = order_details.user_order_id`).
+		Joins(`JOIN region_codes ON user_orders.region_code_id = region_codes.id`).
+		Where(`order_details.delivery_batch_id = ?`, batch).
+		Group(`user_orders.region_code_id, region_codes.price`).
+		Scan(&results).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Response:")
+	for _, result := range results {
+		fmt.Printf("Kode Wilayah: %s\n", result.RegionCode)
+		fmt.Printf("Total per kode wilayah: %d\n", result.PricePerCode)
+		fmt.Printf("Total Berat: %.2f\n", result.TotalWeight)
+		fmt.Printf("Total Users: %d\n", result.TotalUsers)
+		fmt.Printf("Total Orders: %d\n", result.TotalOrders)
+		fmt.Printf("Total Harga: %d\n", result.TotalPrice)
+		fmt.Println("--------------------")
+	}
+
+	return results, nil
 }

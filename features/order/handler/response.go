@@ -4,6 +4,7 @@ import (
 	"jastip-jakarta/features/admin"
 	"jastip-jakarta/features/order"
 	"jastip-jakarta/utils/time"
+	"math"
 )
 
 type UserOrderWaitResponse struct {
@@ -100,6 +101,26 @@ type GetCustomerResponse struct {
 type Customer struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name"`
+}
+
+type RegionBatchStats struct {
+	RegionCode   string  `json:"kode_wilayah"`
+	PricePerCode int     `json:"harga_per_kode_wilayah"`
+	TotalUsers   int     `json:"total_user_dalam_batch"`
+	TotalOrders  int     `json:"total_order_dalam_batch"`
+	TotalWeight  float64 `json:"total_berat_dalam_batch"`
+	TotalPrice   int     `json:"total_harga_dalam_batch"`
+}
+
+func CoreToResponseRegionBatchStats(data order.RegionBatchStats) RegionBatchStats {
+	return RegionBatchStats{
+		RegionCode:   data.RegionCode,
+		PricePerCode: data.PricePerCode,
+		TotalUsers:   data.TotalUsers,
+		TotalOrders:  data.TotalOrders,
+		TotalWeight:  data.TotalWeight,
+		TotalPrice:   data.TotalPrice,
+	}
 }
 
 func CoreToResponseUserOrderById(data order.UserOrder) OrderResponseById {
@@ -290,11 +311,11 @@ func CoreToUserOrderProcessResponse(data order.UserOrder) UserOrderProcessRespon
 // }
 
 func hitungTotalBerat(data []order.UserOrder) int {
-	totalBerat := 0
+	totalBerat := 0.0
 	for _, pesanan := range data {
-		totalBerat += int(pesanan.OrderDetails.WeightItem)
+		totalBerat += pesanan.OrderDetails.WeightItem
 	}
-	return totalBerat
+	return int(math.Ceil(totalBerat))
 }
 
 func hitungTotalHarga(data []order.UserOrder) int {

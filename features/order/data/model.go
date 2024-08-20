@@ -29,7 +29,7 @@ type OrderDetail struct {
 	UserOrderID           uint
 	AdminID               *uint `gorm:"default:null"`
 	Status                string
-	WeightItem            int
+	WeightItem            float64
 	TrackingNumberJastip  string
 	DeliveryBatchID       *string `gorm:"default:null"`
 	EstimatedDeliveryTime *time.Time
@@ -86,6 +86,24 @@ func UserOrderToModel(input order.UserOrder) UserOrder {
 		WhatsappNumber: input.WhatsAppNumber,
 		RegionCodeID:   input.RegionCode,
 	}
+}
+
+func UserOrderUpdateToModel(input order.UpdateOrderByID) (UserOrder, OrderDetail) {
+	userOrder := UserOrder{
+		ItemName:       input.ItemName,
+		TrackingNumber: input.TrackingNumber,
+		OnlineStore:    input.OnlineStore,
+		WhatsappNumber: input.WhatsAppNumber,
+		RegionCodeID:     input.RegionCode,
+	}
+
+	orderDetail := OrderDetail{
+		WeightItem:           input.WeightItem,
+		TrackingNumberJastip: input.TrackingNumberJastip,
+		DeliveryBatchID:      &input.DeliveryBatch,
+	}
+
+	return userOrder, orderDetail
 }
 
 func (uo UserOrder) ModelToUserOrderWait() order.UserOrder {

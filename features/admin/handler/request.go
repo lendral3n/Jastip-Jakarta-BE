@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"jastip-jakarta/features/admin"
+	uh "jastip-jakarta/features/user"
 	"math/rand"
 	"time"
 )
@@ -35,6 +36,22 @@ type DeliveryBatchRequest struct {
 	Batch         int `json:"batch"`
 	Year          int `json:"year"`
 	Month         int `json:"month"`
+}
+
+type UserRequest struct {
+	Name        string `json:"name" form:"name"`
+	Email       string `json:"email" form:"email"`
+	Password    string `json:"password" form:"password"`
+	PhoneNumber int    `json:"phone" form:"phone"`
+}
+
+func RequestToUser(input UserRequest) uh.User {
+	return uh.User{
+		Name:        input.Name,
+		Email:       input.Email,
+		Password:    input.Password,
+		PhoneNumber: input.PhoneNumber,
+	}
 }
 
 func RequestToAdmin(input AdminRequest) admin.Admin {

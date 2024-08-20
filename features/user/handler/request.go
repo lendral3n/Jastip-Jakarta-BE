@@ -3,6 +3,7 @@ package handler
 import (
 	"jastip-jakarta/features/user"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -45,7 +46,12 @@ func UpdateRequestToUser(input UserUpdateRequest) user.User {
 	}
 }
 
+var mu sync.Mutex
+
 func generateID() uint {
+	mu.Lock()
+	defer mu.Unlock()
+
 	rand.Seed(time.Now().UnixNano())
 	randomNumber := rand.Int63n(9999999999-1000000000) + 1000000000
 	return uint(randomNumber)

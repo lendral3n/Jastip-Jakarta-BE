@@ -31,12 +31,23 @@ type DeliveryBatchWithRegion struct {
 	DeliveryBatch   ad.DeliveryBatch
 }
 
+type UpdateOrderByID struct {
+	ItemName             string
+	TrackingNumber       string
+	OnlineStore          string
+	WhatsAppNumber       int
+	RegionCode           string
+	WeightItem           float64
+	DeliveryBatch        string
+	TrackingNumberJastip string
+}
+
 type OrderDetail struct {
 	ID                    uint
 	UserOrderID           uint
 	AdminID               *uint
 	Status                string
-	WeightItem            int
+	WeightItem            float64
 	DeliveryBatchID       *string
 	TrackingNumberJastip  string
 	EstimatedDeliveryTime *time.Time
@@ -56,6 +67,15 @@ type PhotoOrder struct {
 	User            ud.User
 	Region          ad.RegionCode
 	DeliveryBatch   ad.DeliveryBatch
+}
+
+type RegionBatchStats struct {
+	RegionCode   string
+	PricePerCode int
+	TotalUsers   int
+	TotalOrders  int
+	TotalWeight  float64
+	TotalPrice   int
 }
 
 // interface untuk Data Layer
@@ -80,6 +100,8 @@ type OrderDataInterface interface {
 	GenerateCSVByBatch(batch string, filePath string) error
 	GetFoto(batch, code string, userId int) (*PhotoOrder, error)
 	SearchOrders(searchQuery string) ([]UserOrder, error)
+	UpdateOrderByID(orderID uint, inputOrder UpdateOrderByID) error
+	FetchRegionStatsByBatch(batch string) ([]RegionBatchStats, error)
 }
 
 // interface untuk Service Layer
@@ -102,4 +124,6 @@ type OrderServiceInterface interface {
 	GenerateCSVByBatch(batch, filePath string) error
 	GetFoto(batch, code string, userId int) (*PhotoOrder, error)
 	SearchOrders(adminIdLogin int, searchQuery string) ([]UserOrder, error)
+	UpdateOrderByID(adminIdLogin int, orderID uint, inputOrder UpdateOrderByID) error
+	FetchRegionStatsByBatch(adminIdLogin int, batch string) ([]RegionBatchStats, error)
 }
