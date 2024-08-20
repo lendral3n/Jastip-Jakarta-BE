@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"jastip-jakarta/features/user"
 	"mime/multipart"
 	"time"
 )
@@ -53,6 +54,8 @@ type AdminDataInterface interface {
 	SelectDeliveryBatch(batchID string) (*DeliveryBatch, error)
 	SelectAllAdmins() ([]Admin, error)
 	SelectAdminsByRole(role string) ([]Admin, error)
+	SearchRegionCode(code string) ([]RegionCode, error)
+	UpdateRegionCode(code int, updatedRegion RegionCode) error
 }
 
 // interface untuk Service Layer
@@ -68,6 +71,10 @@ type AdminServiceInterface interface {
 	CreateBatchDelivery(adminIdLogin int, input DeliveryBatch) error
 	GetAllBatchDelivery() ([]DeliveryBatch, error)
 	GetDeliveryBatch(batchID string) (*DeliveryBatch, error)
-	GettAllAdmins(adminIdLogin int) ([]Admin, error)
-	GettAdminsByRole(adminIdLogin int, role string) ([]Admin, error)
+	GetAllAdmins(adminIdLogin int) ([]Admin, error)
+	GetAdminsByRole(adminIdLogin int, role string) ([]Admin, error)
+	SearchRegionCode(adminIdLogin int, code string) ([]RegionCode, error)
+	UpdateRegionCode(adminIdLogin int, code int, updatedRegion RegionCode) error
+	SearchUser(adminIdLogin int, query string) ([]user.User, error)
+	UpdateUserByName(adminIdLogin int, name string, input user.User) error
 }

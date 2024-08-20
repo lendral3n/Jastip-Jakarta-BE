@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"jastip-jakarta/features/admin"
+	ud "jastip-jakarta/features/user"
 	"jastip-jakarta/utils/encrypts"
 	"jastip-jakarta/utils/middlewares"
 	"mime/multipart"
@@ -11,13 +12,15 @@ import (
 type adminService struct {
 	adminData   admin.AdminDataInterface
 	hashService encrypts.HashInterface
+	userData    ud.UserDataInterface
 }
 
 // dependency injection
-func New(repo admin.AdminDataInterface, hash encrypts.HashInterface) admin.AdminServiceInterface {
+func New(repo admin.AdminDataInterface, hash encrypts.HashInterface, userData ud.UserDataInterface) admin.AdminServiceInterface {
 	return &adminService{
 		adminData:   repo,
 		hashService: hash,
+		userData:    userData,
 	}
 }
 
@@ -186,7 +189,7 @@ func (u *adminService) GetDeliveryBatch(batchID string) (*admin.DeliveryBatch, e
 }
 
 // GettAdminsByRole implements admin.AdminServiceInterface.
-func (u *adminService) GettAdminsByRole(adminIdLogin int, role string) ([]admin.Admin, error) {
+func (u *adminService) GetAdminsByRole(adminIdLogin int, role string) ([]admin.Admin, error) {
 	adminCheck, err := u.GetById(adminIdLogin)
 	if err != nil || adminCheck.Role != "Super" {
 		return nil, errors.New("anda bukan admin super")
@@ -200,15 +203,79 @@ func (u *adminService) GettAdminsByRole(adminIdLogin int, role string) ([]admin.
 }
 
 // GettAllAdmins implements admin.AdminServiceInterface.
-func (u *adminService) GettAllAdmins(adminIdLogin int) ([]admin.Admin, error) {
+func (u *adminService) GetAllAdmins(adminIdLogin int) ([]admin.Admin, error) {
 	adminCheck, err := u.GetById(adminIdLogin)
 	if err != nil || adminCheck.Role != "Super" {
 		return nil, errors.New("anda bukan admin super")
 	}
-	
+
 	adminRes, err := u.adminData.SelectAllAdmins()
 	if err != nil {
 		return nil, err
 	}
 	return adminRes, nil
+}
+
+// SearchRegionCode implements admin.AdminServiceInterface.
+func (u *adminService) SearchRegionCode(adminIdLogin int, code string) ([]admin.RegionCode, error) {
+	adminCheck, err := u.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Super" {
+		return nil, errors.New("anda bukan admin super")
+	}
+
+	regionCodes, err := u.adminData.SearchRegionCode(code)
+	if err != nil {
+		return nil, err
+	}
+	return regionCodes, nil
+}
+
+// UpdateRegionCode implements admin.AdminServiceInterface.
+func (u *adminService) UpdateRegionCode(adminIdLogin int, code int, updatedRegion admin.RegionCode) error {
+	adminCheck, err := u.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Super" {
+		return errors.New("anda bukan admin super")
+	}
+
+	err = u.adminData.UpdateRegionCode(code, updatedRegion)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// SearchUser implements admin.AdminServiceInterface.
+func (u *adminService) SearchUser(adminIdLogin int, query string) ([]ud.User, error) {
+	adminCheck, err := u.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Super" {
+		return nil, errors.New("anda bukan admin super")
+	}
+
+	users, err := u.userData.SelectByNameOrEmail(query)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
+func (u *adminService) UpdateUserByName(adminIdLogin int, name string, input ud.User) error {
+	adminCheck, err := u.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Super" {
+		return errors.New("anda bukan admin super")
+	}
+
+	if input.Password != "" {
+		hashedPass, errHash := u.hashService.HashPassword(input.Password)
+		if errHash != nil {
+			return errors.New("error hash password")
+		}
+		input.Password = hashedPass
+	}
+
+	errUpdate := u.userData.UpdateUserByName(name, input)
+    if errUpdate != nil {
+        return errors.New("error update user: " + errUpdate.Error())
+    }
+
+    return nil
 }

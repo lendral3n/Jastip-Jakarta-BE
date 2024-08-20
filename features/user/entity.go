@@ -22,6 +22,8 @@ type UserDataInterface interface {
 	Update(userIdLogin int, input User, photo *multipart.FileHeader) error
 	SelectById(userIdLogin int) (*User, error)
 	Login(phoneOrEmail, password string) (data *User, err error)
+	SelectByNameOrEmail(query string) ([]User, error)
+	UpdateUserByName(name string, input User) error
 }
 
 // interface untuk Service Layer

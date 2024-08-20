@@ -180,29 +180,58 @@ func (u *adminQuery) SelectDeliveryBatch(batchID string) (*admin.DeliveryBatch, 
 // SelectAdminsByRole implements admin.AdminDataInterface.
 func (u *adminQuery) SelectAdminsByRole(role string) ([]admin.Admin, error) {
 	var admins []Admin
-    err := u.db.Where("role = ?", role).Find(&admins).Error
-    if err != nil {
-        return nil, err
-    }
+	err := u.db.Where("role = ?", role).Find(&admins).Error
+	if err != nil {
+		return nil, err
+	}
 
-    var responseAdmins []admin.Admin
-    for _, admin := range admins {
-        responseAdmins = append(responseAdmins, admin.ModelToAdmin())
-    }
-    return responseAdmins, nil
+	var responseAdmins []admin.Admin
+	for _, admin := range admins {
+		responseAdmins = append(responseAdmins, admin.ModelToAdmin())
+	}
+	return responseAdmins, nil
 }
 
 // SelectAllAdmins implements admin.AdminDataInterface.
 func (u *adminQuery) SelectAllAdmins() ([]admin.Admin, error) {
 	var admins []Admin
-    err := u.db.Where("role <> ?", "Super").Find(&admins).Error
-    if err != nil {
-        return nil, err
-    }
+	err := u.db.Where("role <> ?", "Super").Find(&admins).Error
+	if err != nil {
+		return nil, err
+	}
 
-    var responseAdmins []admin.Admin
-    for _, admin := range admins {
-        responseAdmins = append(responseAdmins, admin.ModelToAdmin())
-    }
-    return responseAdmins, nil
+	var responseAdmins []admin.Admin
+	for _, admin := range admins {
+		responseAdmins = append(responseAdmins, admin.ModelToAdmin())
+	}
+	return responseAdmins, nil
+}
+
+// SearchRegionCode implements admin.AdminDataInterface.
+func (u *adminQuery) SearchRegionCode(code string) ([]admin.RegionCode, error) {
+	var regionCodes []RegionCode
+
+	// Mencari kode wilayah yang mengandung string tertentu
+	err := u.db.Where("id LIKE ? OR region LIKE ? OR full_address LIKE ?", "%"+code+"%", "%"+code+"%", "%"+code+"%").Find(&regionCodes).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var responseRegionCodes []admin.RegionCode
+	for _, rc := range regionCodes {
+		responseRegionCodes = append(responseRegionCodes, rc.ModelToRegionCode())
+	}
+
+	return responseRegionCodes, nil
+}
+
+// UpdateRegionCode implements admin.AdminDataInterface.
+func (u *adminQuery) UpdateRegionCode(code int, updatedRegion admin.RegionCode) error {
+	codeInput := RegionCodeToModel(updatedRegion)
+
+	tx := u.db.Model(&RegionCode{}).Where("code = ?", code).Updates(codeInput)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return nil
 }

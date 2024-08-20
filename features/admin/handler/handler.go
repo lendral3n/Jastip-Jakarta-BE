@@ -3,6 +3,7 @@ package handler
 import (
 	"jastip-jakarta/features/admin"
 	"net/http"
+	"strconv"
 
 	"jastip-jakarta/utils/middlewares"
 	"jastip-jakarta/utils/responses"
@@ -198,7 +199,7 @@ func (handler *AdminHandler) GetAdminJakarta(c echo.Context) error {
 	}
 
 	role := "Jakarta"
-	admin, err := handler.adminService.GettAdminsByRole(adminIdLogin, role)
+	admin, err := handler.adminService.GetAdminsByRole(adminIdLogin, role)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
 	}
@@ -218,7 +219,7 @@ func (handler *AdminHandler) GetAdminPerwakilan(c echo.Context) error {
 	}
 
 	role := "Perwakilan"
-	admin, err := handler.adminService.GettAdminsByRole(adminIdLogin, role)
+	admin, err := handler.adminService.GetAdminsByRole(adminIdLogin, role)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
 	}
@@ -237,7 +238,7 @@ func (handler *AdminHandler) GetAllAdmin(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
 	}
 
-	admin, err := handler.adminService.GettAllAdmins(adminIdLogin)
+	admin, err := handler.adminService.GetAllAdmins(adminIdLogin)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
 	}
@@ -248,4 +249,102 @@ func (handler *AdminHandler) GetAllAdmin(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mengambil admin perwakilan", adminReponse))
+}
+
+func (handler *AdminHandler) SearchRegionCode(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+	query := c.QueryParam("code")
+
+	regionCodes, err := handler.adminService.SearchRegionCode(adminIdLogin, query)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse("error searching region code. "+err.Error(), nil))
+	}
+
+	var codeResponse []RegionCodeResponse
+	for _, codes := range regionCodes {
+		codeResponse = append(codeResponse, CoreToResponseRegionCode(codes))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mencari kode wilayah", codeResponse))
+}
+
+func (handler *AdminHandler) UpdateRegionCode(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+	if adminIdLogin == 0 {
+		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+	}
+
+    id, err := strconv.Atoi(c.Param("code"))
+    if err != nil {
+        return c.JSON(http.StatusBadRequest, responses.WebResponse("Invalid CODE format", nil))
+    }
+
+    updateRegion := RegionCodeRequest{}
+	errBind := c.Bind(&updateRegion)
+	if errBind != nil {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("error bind data, data not valid", nil))
+	}
+
+	regionCore := RequestToRegionCode(updateRegion)
+    err = handler.adminService.UpdateRegionCode(adminIdLogin, (id), regionCore)
+    if err != nil {
+        return c.JSON(http.StatusInternalServerError, responses.WebResponse("Failed to update region code. "+err.Error(), nil))
+    }
+
+    return c.JSON(http.StatusOK, responses.WebResponse("Region code updated successfully", nil))
+}
+
+func (handler *AdminHandler) SearchUser(c echo.Context) error {
+    adminIdLogin := middlewares.ExtractTokenUserId(c)
+    if adminIdLogin == 0 {
+        return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+    }
+
+    query := c.QueryParam("name")
+    if query == "" {
+        return c.JSON(http.StatusBadRequest, responses.WebResponse("Query parameter 'name or email' is required", nil))
+    }
+
+    users, err := handler.adminService.SearchUser(adminIdLogin, query)
+    if err != nil {
+        return c.JSON(http.StatusInternalServerError, responses.WebResponse("Error searching users. "+err.Error(), nil))
+    }
+
+    var userResponses []UserResponse
+    for _, user := range users {
+        userResponses = append(userResponses, UserToResponse(user))
+    }
+
+    return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mencari pengguna", userResponses))
+}
+
+func (handler *AdminHandler) UpdateUserByName(c echo.Context) error {
+    adminIdLogin := middlewares.ExtractTokenUserId(c)
+    if adminIdLogin == 0 {
+        return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+    }
+
+    name := c.Param("name")
+    if name == "" {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("name tidak boleh kosong", nil))
+	}
+
+    var updateUserReq UserRequest
+    err := c.Bind(&updateUserReq)
+    if err != nil {
+        return c.JSON(http.StatusBadRequest, responses.WebResponse("error bind data, data not valid", nil))
+    }
+
+    userCore := RequestToUser(updateUserReq)
+    
+    err = handler.adminService.UpdateUserByName(adminIdLogin, name, userCore)
+    if err != nil {
+        return c.JSON(http.StatusInternalServerError, responses.WebResponse("Failed to update user. "+err.Error(), nil))
+    }
+
+    return c.JSON(http.StatusOK, responses.WebResponse("User updated successfully", nil))
 }

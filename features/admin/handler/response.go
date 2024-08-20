@@ -3,6 +3,7 @@ package handler
 import (
 	"jastip-jakarta/features/admin"
 	"jastip-jakarta/utils/time"
+	uh "jastip-jakarta/features/user"
 )
 
 type AdminResponse struct {
@@ -34,6 +35,24 @@ type DeliveryBatchResponse struct {
 	Batch         int    `json:"batch"`
 	Year          int    `json:"year"`
 	Month         int    `json:"month"`
+}
+
+type UserResponse struct {
+    ID           uint   `json:"id"`
+    Name         string `json:"name"`
+    Email        string `json:"email"`
+    PhoneNumber  int    `json:"phone_number"`
+    PhotoProfile string `json:"photo_profile"`
+}
+
+func UserToResponse(user uh.User) UserResponse {
+    return UserResponse{
+        ID:           user.ID,
+        Name:         user.Name,
+        Email:        user.Email,
+        PhoneNumber:  user.PhoneNumber,
+        PhotoProfile: user.PhotoProfile,
+    }
 }
 
 func AdminToResponse(data admin.Admin) AdminResponse {

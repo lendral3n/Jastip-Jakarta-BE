@@ -32,7 +32,7 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	userHandlerAPI := uh.New(userService)
 
 	adminData := ad.New(db, cloudinaryUploader)
-	adminService := as.New(adminData, hash)
+	adminService := as.New(adminData, hash, userData)
 	adminHandlerAPI := ah.New(adminService)
 
 	orderData := od.New(db, cloudinaryUploader, csvGenerator)
@@ -54,16 +54,20 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	e.GET("/admin/perwakilan", adminHandlerAPI.GetAdminPerwakilan, middlewares.JWTMiddleware())
 	e.GET("/admin/jakarta", adminHandlerAPI.GetAdminJakarta, middlewares.JWTMiddleware())
 	e.GET("/admin/all", adminHandlerAPI.GetAllAdmin, middlewares.JWTMiddleware())
-
+	e.GET("/admin/user/search", adminHandlerAPI.SearchUser, middlewares.JWTMiddleware())
+	e.PUT("/admin/user/:name", adminHandlerAPI.UpdateUserByName, middlewares.JWTMiddleware())
+	
 	// define routes/ endpoint BATCH
 	e.POST("/admin/batch", adminHandlerAPI.CreateDeliveryBatch, middlewares.JWTMiddleware())
 	e.GET("/batch", adminHandlerAPI.GetAllDeliveryBatch)
 	e.GET("/batch/:batch_id", adminHandlerAPI.GetDeliveryBatchById)
-
+	
 	// define routes/ endpoint REGION
 	e.POST("/admin/region", adminHandlerAPI.CreateRegionCode, middlewares.JWTMiddleware())
 	e.GET("/region", adminHandlerAPI.GetRegionCode)
 	e.GET("/region/:code", adminHandlerAPI.GetRegionCodeById)
+	e.GET("/admin/region/search", adminHandlerAPI.SearchRegionCode, middlewares.JWTMiddleware())
+	e.PUT("/admin/region/:code", adminHandlerAPI.UpdateRegionCode, middlewares.JWTMiddleware())
 
 	// define routes/ endpoint USER ORDER
 	e.POST("/users/order", orderHandlerAPI.CreateUserOrder, middlewares.JWTMiddleware())
@@ -82,6 +86,8 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	e.POST("/admin/order/estimasi", orderHandlerAPI.UpdateEstimationForOrders, middlewares.JWTMiddleware())
 	e.PUT("/admin/order/status/:order_id", orderHandlerAPI.UpdateOrderStatus, middlewares.JWTMiddleware())
 	e.GET("/admin/order/search", orderHandlerAPI.SearchOrder, middlewares.JWTMiddleware())
+	e.PUT("/admin/order/:order_id", orderHandlerAPI.UpdateOrderById, middlewares.JWTMiddleware())
+	e.GET("/admin/order/statistik/:batch", orderHandlerAPI.GetOrderSStats, middlewares.JWTMiddleware())
 
 	// define routes/ endpoint ADMIN FOTO
 	e.POST("/admin/foto", orderHandlerAPI.UploadFotoPacked, middlewares.JWTMiddleware())
