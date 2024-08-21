@@ -56,6 +56,8 @@ func InitRouter(db *gorm.DB, e *echo.Echo) {
 	e.GET("/admin/all", adminHandlerAPI.GetAllAdmin, middlewares.JWTMiddleware())
 	e.GET("/admin/user/search", adminHandlerAPI.SearchUser, middlewares.JWTMiddleware())
 	e.PUT("/admin/user/:name", adminHandlerAPI.UpdateUserByName, middlewares.JWTMiddleware())
+	e.POST("/admin/user", adminHandlerAPI.CreateUser, middlewares.JWTMiddleware())
+	e.GET("/admin/user", adminHandlerAPI.GetAllUSer, middlewares.JWTMiddleware())
 	
 	// define routes/ endpoint BATCH
 	e.POST("/admin/batch", adminHandlerAPI.CreateDeliveryBatch, middlewares.JWTMiddleware())

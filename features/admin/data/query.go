@@ -226,10 +226,10 @@ func (u *adminQuery) SearchRegionCode(code string) ([]admin.RegionCode, error) {
 }
 
 // UpdateRegionCode implements admin.AdminDataInterface.
-func (u *adminQuery) UpdateRegionCode(code int, updatedRegion admin.RegionCode) error {
+func (u *adminQuery) UpdateRegionCode(code string, updatedRegion admin.RegionCode) error {
 	codeInput := RegionCodeToModel(updatedRegion)
 
-	tx := u.db.Model(&RegionCode{}).Where("code = ?", code).Updates(codeInput)
+	tx := u.db.Model(&RegionCode{}).Where("id = ?", code).Updates(codeInput)
 	if tx.Error != nil {
 		return tx.Error
 	}

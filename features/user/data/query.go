@@ -55,7 +55,6 @@ func (u *userQuery) Insert(input user.User) error {
 	return nil
 }
 
-
 // Login implements user.UserDataInterface.
 func (u *userQuery) Login(phoneOrEmail, password string) (data *user.User, err error) {
 	var userDataGorm User
@@ -102,7 +101,7 @@ func (u *userQuery) SelectById(userIdLogin int) (*user.User, error) {
 
 // Update implements user.UserDataInterface.
 func (u *userQuery) Update(userIdLogin int, input user.User, photo *multipart.FileHeader) error {
-		// Cek apakah email sudah ada
+	// Cek apakah email sudah ada
 	var emailCheck User
 	emailResult := u.db.Where("email = ?", input.Email).First(&emailCheck)
 	if emailResult.RowsAffected > 0 {
@@ -143,33 +142,33 @@ func (u *userQuery) Update(userIdLogin int, input user.User, photo *multipart.Fi
 
 // SelectByName finds a user by name
 func (u *userQuery) SelectByName(name string) (*user.User, error) {
-    var userDataGorm User
-    err := u.db.Where("name = ?", name).First(&userDataGorm).Error
-    if err != nil {
-        if errors.Is(err, gorm.ErrRecordNotFound) {
-            return nil, nil
-        }
-        return nil, err
-    }
-    userData := userDataGorm.ModelToUser()
-    return &userData, nil
+	var userDataGorm User
+	err := u.db.Where("name = ?", name).First(&userDataGorm).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	userData := userDataGorm.ModelToUser()
+	return &userData, nil
 }
 
 // SelectByNameOrEmail finds a user by name or email
 func (u *userQuery) SelectByNameOrEmail(query string) ([]user.User, error) {
-    var usersDataGorm []User
-    err := u.db.Where("name LIKE ? OR email LIKE ?", "%"+query+"%", "%"+query+"%").Find(&usersDataGorm).Error
-    if err != nil {
-        return nil, err
-    }
+	var usersDataGorm []User
+	err := u.db.Where("name LIKE ? OR email LIKE ?", "%"+query+"%", "%"+query+"%").Find(&usersDataGorm).Error
+	if err != nil {
+		return nil, err
+	}
 
-    // Convert the list of User models to the user.User domain models
-    usersData := make([]user.User, len(usersDataGorm))
-    for i, userDataGorm := range usersDataGorm {
-        usersData[i] = userDataGorm.ModelToUser()
-    }
+	// Convert the list of User models to the user.User domain models
+	usersData := make([]user.User, len(usersDataGorm))
+	for i, userDataGorm := range usersDataGorm {
+		usersData[i] = userDataGorm.ModelToUser()
+	}
 
-    return usersData, nil
+	return usersData, nil
 }
 
 func (u *userQuery) UpdateUserByName(name string, input user.User) error {
@@ -193,4 +192,23 @@ func (u *userQuery) UpdateUserByName(name string, input user.User) error {
 	}
 
 	return nil
+}
+
+// SelectAllUser implements user.UserDataInterface.
+func (u *userQuery) SelectAllUser() ([]user.User, error) {
+	var usersDataGorm []User
+
+	// Mengambil semua data pengguna dari database
+	err := u.db.Find(&usersDataGorm).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Mengkonversi list User model ke list user.User domain models
+	usersData := make([]user.User, len(usersDataGorm))
+	for i, userDataGorm := range usersDataGorm {
+		usersData[i] = userDataGorm.ModelToUser()
+	}
+
+	return usersData, nil
 }

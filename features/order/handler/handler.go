@@ -88,7 +88,8 @@ func (handler *OrderHandler) GetUserOrderWait(c echo.Context) error {
 }
 
 func (handler *OrderHandler) GetOrderById(c echo.Context) error {
-	orderId, err := strconv.Atoi(c.Param("order_id"))
+	orderIdStr := c.Param("order_id")
+	orderId, err := strconv.ParseUint(orderIdStr, 10, 64)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, responses.WebResponse("ID order tidak valid", nil))
 	}
