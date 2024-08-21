@@ -5,6 +5,7 @@ import (
 	"jastip-jakarta/features/admin"
 	uh "jastip-jakarta/features/user"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -54,6 +55,16 @@ func RequestToUser(input UserRequest) uh.User {
 	}
 }
 
+func RequestRegisterToUser(input UserRequest) uh.User {
+	return uh.User{
+		ID: generateIDUSer(),
+		Name:        input.Name,
+		Email:       input.Email,
+		Password:    input.Password,
+		PhoneNumber: input.PhoneNumber,
+	}
+}
+
 func RequestToAdmin(input AdminRequest) admin.Admin {
 	return admin.Admin{
 		ID:          generateID(),
@@ -92,3 +103,13 @@ func generateID() uint {
 	return uint(randomNumber)
 }
 
+var mu sync.Mutex
+
+func generateIDUSer() uint {
+	mu.Lock()
+	defer mu.Unlock()
+
+	rand.Seed(time.Now().UnixNano())
+	randomNumber := rand.Int63n(9999999999-1000000000) + 1000000000
+	return uint(randomNumber)
+}

@@ -37,7 +37,6 @@ func (handler *UserHandler) RegisterUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, responses.WebResponse("Pendaftaran Berhasil", nil))
 }
 
-
 func (handler *UserHandler) GetUser(c echo.Context) error {
 	userIdLogin := middlewares.ExtractTokenUserId(c)
 

@@ -55,7 +55,7 @@ type AdminDataInterface interface {
 	SelectAllAdmins() ([]Admin, error)
 	SelectAdminsByRole(role string) ([]Admin, error)
 	SearchRegionCode(code string) ([]RegionCode, error)
-	UpdateRegionCode(code int, updatedRegion RegionCode) error
+	UpdateRegionCode(code string, updatedRegion RegionCode) error
 }
 
 // interface untuk Service Layer
@@ -74,7 +74,9 @@ type AdminServiceInterface interface {
 	GetAllAdmins(adminIdLogin int) ([]Admin, error)
 	GetAdminsByRole(adminIdLogin int, role string) ([]Admin, error)
 	SearchRegionCode(adminIdLogin int, code string) ([]RegionCode, error)
-	UpdateRegionCode(adminIdLogin int, code int, updatedRegion RegionCode) error
+	UpdateRegionCode(adminIdLogin int, code string, updatedRegion RegionCode) error
 	SearchUser(adminIdLogin int, query string) ([]user.User, error)
 	UpdateUserByName(adminIdLogin int, name string, input user.User) error
+	GetAllUser(adminIdLogin int) ([]user.User, error)
+	CreateUser(adminIdLogin int, input user.User) error
 }

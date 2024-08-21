@@ -24,6 +24,7 @@ type UserDataInterface interface {
 	Login(phoneOrEmail, password string) (data *User, err error)
 	SelectByNameOrEmail(query string) ([]User, error)
 	UpdateUserByName(name string, input User) error
+	SelectAllUser() ([]User, error)
 }
 
 // interface untuk Service Layer

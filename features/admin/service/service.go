@@ -231,7 +231,7 @@ func (u *adminService) SearchRegionCode(adminIdLogin int, code string) ([]admin.
 }
 
 // UpdateRegionCode implements admin.AdminServiceInterface.
-func (u *adminService) UpdateRegionCode(adminIdLogin int, code int, updatedRegion admin.RegionCode) error {
+func (u *adminService) UpdateRegionCode(adminIdLogin int, code string, updatedRegion admin.RegionCode) error {
 	adminCheck, err := u.GetById(adminIdLogin)
 	if err != nil || adminCheck.Role != "Super" {
 		return errors.New("anda bukan admin super")
@@ -273,9 +273,52 @@ func (u *adminService) UpdateUserByName(adminIdLogin int, name string, input ud.
 	}
 
 	errUpdate := u.userData.UpdateUserByName(name, input)
-    if errUpdate != nil {
-        return errors.New("error update user: " + errUpdate.Error())
-    }
+	if errUpdate != nil {
+		return errors.New("error update user: " + errUpdate.Error())
+	}
 
-    return nil
+	return nil
+}
+
+// CreateUser implements admin.AdminServiceInterface.
+func (u *adminService) CreateUser(adminIdLogin int, input ud.User) error {
+	adminCheck, err := u.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Super" {
+		return errors.New("anda bukan admin super")
+	}
+
+	if input.Name == "" {
+		return errors.New("nama tidak boleh kosong")
+	}
+	if input.Email == "" {
+		return errors.New("email tidak boleh kosong")
+	}
+	if input.PhoneNumber == 0 {
+		return errors.New("nomor Telephone tidak boleh kosong")
+	}
+
+	if input.Password != "" {
+		hashedPass, errHash := u.hashService.HashPassword(input.Password)
+		if errHash != nil {
+			return errors.New("error hash password")
+		}
+		input.Password = hashedPass
+	}
+
+	err = u.userData.Insert(input)
+	return err
+}
+
+// GetAllUser implements admin.AdminServiceInterface.
+func (u *adminService) GetAllUser(adminIdLogin int) ([]ud.User, error) {
+	adminCheck, err := u.GetById(adminIdLogin)
+	if err != nil || adminCheck.Role != "Super" {
+		return nil, errors.New("anda bukan admin super")
+	}
+
+	userResponse, err := u.userData.SelectAllUser()
+	if err != nil {
+		return nil, err
+	}
+	return userResponse, nil
 }

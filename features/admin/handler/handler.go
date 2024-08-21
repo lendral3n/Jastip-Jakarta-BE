@@ -3,7 +3,6 @@ package handler
 import (
 	"jastip-jakarta/features/admin"
 	"net/http"
-	"strconv"
 
 	"jastip-jakarta/utils/middlewares"
 	"jastip-jakarta/utils/responses"
@@ -278,9 +277,9 @@ func (handler *AdminHandler) UpdateRegionCode(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
 	}
 
-    id, err := strconv.Atoi(c.Param("code"))
-    if err != nil {
-        return c.JSON(http.StatusBadRequest, responses.WebResponse("Invalid CODE format", nil))
+    id := c.Param("code")
+    if id == "" {
+        return c.JSON(http.StatusBadRequest, responses.WebResponse("code tidak boleh kosong", nil))
     }
 
     updateRegion := RegionCodeRequest{}
@@ -290,7 +289,7 @@ func (handler *AdminHandler) UpdateRegionCode(c echo.Context) error {
 	}
 
 	regionCore := RequestToRegionCode(updateRegion)
-    err = handler.adminService.UpdateRegionCode(adminIdLogin, (id), regionCore)
+    err := handler.adminService.UpdateRegionCode(adminIdLogin, id, regionCore)
     if err != nil {
         return c.JSON(http.StatusInternalServerError, responses.WebResponse("Failed to update region code. "+err.Error(), nil))
     }
@@ -347,4 +346,44 @@ func (handler *AdminHandler) UpdateUserByName(c echo.Context) error {
     }
 
     return c.JSON(http.StatusOK, responses.WebResponse("User updated successfully", nil))
+}
+
+func (handler *AdminHandler) CreateUser(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+    if adminIdLogin == 0 {
+        return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+    }
+
+	newUser := UserRequest{}
+	errBind := c.Bind(&newUser)
+	if errBind != nil {
+		return c.JSON(http.StatusBadRequest, responses.WebResponse("error bind data, data not valid", nil))
+	}
+
+	userCore := RequestRegisterToUser(newUser)
+	errInsert := handler.adminService.CreateUser(adminIdLogin, userCore)
+	if errInsert != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(errInsert.Error(), nil))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Pendaftaran Berhasil", nil))
+}
+
+func (handler *AdminHandler) GetAllUSer(c echo.Context) error {
+	adminIdLogin := middlewares.ExtractTokenUserId(c)
+    if adminIdLogin == 0 {
+        return c.JSON(http.StatusUnauthorized, responses.WebResponse("Silahkan login terlebih dahulu", nil))
+    }
+
+	user, err := handler.adminService.GetAllUser(adminIdLogin)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.WebResponse(err.Error(), nil))
+	}
+
+	var userResps []UserResponse
+	for _, users := range user {
+		userResps = append(userResps, UserToResponse(users))
+	}
+
+	return c.JSON(http.StatusOK, responses.WebResponse("Berhasil mengambil semua user", userResps))
 }
